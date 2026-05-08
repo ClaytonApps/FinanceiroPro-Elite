@@ -600,16 +600,10 @@ window.addEventListener("error", function (ev) {
                 className:"p-3 rounded-xl flex items-center justify-center gap-2 "+(props.theme==="light"?"bg-orange-500/20 border border-orange-500 text-orange-400":"card")},
                 h(Icon,{name:"sun",size:16})," Claro"))),
           h("div",null,
-            h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Meta"),
-            h("div",{className:"card rounded-xl p-3 space-y-2"},
-              h("label",{className:"text-xs text-zinc-400"},"Meta diária (R$)"),
-              h("input",{type:"number",step:"1",min:"0",value:props.meta.diaria,
-                onChange:function(e){props.setMeta(Object.assign({},props.meta,{diaria:parseFloat(e.target.value)||0}));},
-                className:"input w-full rounded-lg px-3 py-2"}),
-              h("label",{className:"text-xs text-zinc-400"},"Meta semanal (R$)"),
-              h("input",{type:"number",step:"1",min:"0",value:props.meta.semanal,
-                onChange:function(e){props.setMeta(Object.assign({},props.meta,{semanal:parseFloat(e.target.value)||0}));},
-                className:"input w-full rounded-lg px-3 py-2"}))),
+            h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Metas"),
+            h("button",{onClick:function(){props.openMetaEditor();},
+              className:"w-full card py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold text-yellow-400 border border-yellow-500/30"},
+              h(Icon,{name:"target",size:14})," Configurar metas (diária e semanal)")),
           h("div",null,
             h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Backup"),
             h("div",{className:"grid grid-cols-2 gap-2"},
@@ -632,6 +626,110 @@ window.addEventListener("error", function (ev) {
             className:"w-full bg-red-500/10 border border-red-500/30 text-red-400 py-3 rounded-xl font-semibold"},
             "Apagar todas as transações"))));
   }
+  function MetaEditor(props) {
+    var s1 = useState(props.meta.diaria ? String(props.meta.diaria) : "");
+    var diaria = s1[0], setDiaria = s1[1];
+    var s2 = useState(props.meta.semanal ? String(props.meta.semanal) : "");
+    var semanal = s2[0], setSemanal = s2[1];
+    var s3 = useState(true); var autoSemanal = s3[0], setAutoSemanal = s3[1];
+
+    function setDiariaVal(v) {
+      setDiaria(v);
+      if (autoSemanal) {
+        var n = parseFloat(v);
+        if (!isNaN(n) && n > 0) setSemanal(String(Math.round(n * 6)));
+      }
+    }
+
+    function submit(ev) {
+      ev.preventDefault();
+      var d = parseFloat(diaria) || 0;
+      var s = parseFloat(semanal) || 0;
+      if (d <= 0 && s <= 0) { alert("Defina ao menos uma meta maior que zero."); return; }
+      props.setMeta({ diaria: d, semanal: s });
+      props.toast("Metas atualizadas com sucesso");
+      props.onClose();
+    }
+
+    var sugestoesD = [150, 250, 350, 500];
+    var sugestoesS = [1000, 1500, 2000, 3000];
+
+    return h("div",{className:"fixed inset-0 modal-overlay z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"},
+      h("div",{className:"card rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto"},
+        h("div",{className:"sticky top-0 card flex items-center justify-between px-5 py-4 border-b border-[var(--border)] z-10"},
+          h("div",{className:"flex items-center gap-2"},
+            h(Icon,{name:"target",size:20,className:"text-yellow-400"}),
+            h("h3",{className:"text-lg font-bold gradient-text"},"Definir Metas")),
+          h("button",{onClick:props.onClose,className:"text-zinc-400 hover:text-white"},h(Icon,{name:"x"}))),
+        h("form",{onSubmit:submit,className:"p-5 space-y-5"},
+          h("div",{className:"text-xs text-zinc-400 bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-3 leading-relaxed"},
+            "Defina quanto você quer ganhar de ",h("b",{className:"text-yellow-400"},"entradas"),
+            " (salário + ganhos variáveis). O progresso aparece no Dashboard e na aba Motorista."),
+          h("div",null,
+            h("label",{className:"text-xs uppercase tracking-wide font-semibold text-zinc-400 mb-2 flex items-center gap-1"},
+              h(Icon,{name:"target",size:12,className:"text-yellow-400"})," Meta diária (R$)"),
+            h("input",{type:"number",inputMode:"decimal",step:"1",min:"0",value:diaria,
+              placeholder:"Ex: 250",
+              onChange:function(e){setDiariaVal(e.target.value);},
+              className:"input w-full rounded-xl px-4 py-3 text-lg font-bold"}),
+            h("div",{className:"flex flex-wrap gap-1.5 mt-2"},
+              sugestoesD.map(function(v){
+                return h("button",{key:v,type:"button",onClick:function(){setDiariaVal(String(v));},
+                  className:"text-xs px-3 py-1.5 card rounded-lg hover:border-yellow-500/50 border"},
+                  "R$ "+v);
+              }))),
+          h("label",{className:"flex items-center gap-2 text-xs text-zinc-400 cursor-pointer"},
+            h("input",{type:"checkbox",checked:autoSemanal,
+              onChange:function(e){
+                setAutoSemanal(e.target.checked);
+                if (e.target.checked && diaria) {
+                  var n = parseFloat(diaria); if (!isNaN(n)) setSemanal(String(Math.round(n*6)));
+                }
+              },
+              className:"w-4 h-4 accent-orange-500"}),
+            "Calcular semanal automaticamente (6 dias × diária)"),
+          h("div",null,
+            h("label",{className:"text-xs uppercase tracking-wide font-semibold text-zinc-400 mb-2 flex items-center gap-1"},
+              h(Icon,{name:"flame",size:12,className:"text-orange-400"})," Meta semanal (R$)"),
+            h("input",{type:"number",inputMode:"decimal",step:"1",min:"0",value:semanal,
+              placeholder:"Ex: 1500",
+              onChange:function(e){ setSemanal(e.target.value); setAutoSemanal(false); },
+              className:"input w-full rounded-xl px-4 py-3 text-lg font-bold"}),
+            h("div",{className:"flex flex-wrap gap-1.5 mt-2"},
+              sugestoesS.map(function(v){
+                return h("button",{key:v,type:"button",
+                  onClick:function(){ setSemanal(String(v)); setAutoSemanal(false); },
+                  className:"text-xs px-3 py-1.5 card rounded-lg hover:border-orange-500/50 border"},
+                  "R$ "+v);
+              }))),
+          h("div",{className:"flex gap-2 pt-2"},
+            h("button",{type:"button",onClick:props.onClose,
+              className:"flex-1 card py-3 rounded-xl font-semibold"},"Cancelar"),
+            h("button",{type:"submit",
+              className:"flex-1 gradient-bg text-black py-3 rounded-xl font-bold flex items-center justify-center gap-2"},
+              h(Icon,{name:"check",size:16})," Salvar Metas")))));
+  }
+
+  function ApoioCard(props) {
+    return h("section",{className:"card rounded-2xl p-5 sm:p-6 border border-orange-500/30",
+      style:{background:"linear-gradient(135deg, rgba(255,184,0,0.08) 0%, rgba(255,107,0,0.08) 100%)"}},
+      h("div",{className:"flex flex-col sm:flex-row items-start sm:items-center gap-4"},
+        h("div",{className:"w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center text-black shrink-0"},
+          h(Icon,{name:"heart",size:26})),
+        h("div",{className:"flex-1 min-w-0"},
+          h("h3",{className:"text-base sm:text-lg font-extrabold text-white mb-1"},
+            "Gostou do FinanceiroPro Elite? 🧡"),
+          h("p",{className:"text-xs sm:text-sm text-zinc-300 leading-relaxed"},
+            "Este app é ",h("b",{className:"text-yellow-400"},"100% gratuito"),", sem anúncios e sem coleta de dados. ",
+            "Se ele está te ajudando a organizar suas finanças, considere apoiar com qualquer valor via ",
+            h("b",{className:"gradient-text"},"Pix no Mercado Pago"),". Cada contribuição mantém o projeto vivo e em constante evolução. ",
+            h("b",{className:"text-orange-400"},"Sua ajuda faz toda a diferença!"))),
+        h("a",{href:"https://mpago.la/2z5Uj6E",target:"_blank",rel:"noopener noreferrer",
+          onClick:function(){ if(props.toast) props.toast("Obrigado pelo apoio! 🧡","success"); },
+          className:"w-full sm:w-auto pulse-orange gradient-bg text-black px-5 py-3 rounded-xl font-extrabold flex items-center justify-center gap-2 hover:scale-105 transition shrink-0 whitespace-nowrap"},
+          h(Icon,{name:"heart",size:18})," Apoiar via Pix")));
+  }
+
   function App() {
     var s1 = useState(function(){ return load("fp_transacoes",[]); });
     var transacoes=s1[0], setTransacoes=s1[1];
@@ -654,6 +752,7 @@ window.addEventListener("error", function (ev) {
     var s14 = useState(function(){ return !load("fp_onboarded", false); });
     var showOnboarding=s14[0], setShowOnboarding=s14[1];
     var s15 = useState("dashboard"); var tab=s15[0], setTab=s15[1];
+    var s16 = useState(false); var showMetaEditor=s16[0], setShowMetaEditor=s16[1];
 
     var toastMgr = useToasts();
     useEffect(function(){
@@ -899,8 +998,10 @@ window.addEventListener("error", function (ev) {
               className:"card p-2 rounded-lg text-zinc-400 hover:text-orange-400",title:"Configurações"},
               h(Icon,{name:"settings",size:16})),
             h("a",{href:"https://mpago.la/2z5Uj6E",target:"_blank",rel:"noopener noreferrer",
-              className:"hidden sm:flex items-center gap-2 bg-orange-500/10 border border-orange-500/40 hover:border-orange-500 text-orange-400 px-3 py-2 rounded-lg text-xs font-bold transition"},
-              h(Icon,{name:"heart",size:14})," Apoiar"))),
+              title:"Apoie este projeto via Pix no Mercado Pago — sua contribuição mantém o app gratuito e em evolução! 🧡",
+              onClick:function(){ toastMgr.push("Obrigado pelo apoio! 🧡","success"); },
+              className:"hidden sm:flex items-center gap-2 gradient-bg text-black hover:opacity-90 px-3 py-2 rounded-lg text-xs font-extrabold transition"},
+              h(Icon,{name:"heart",size:14})," Apoiar via Pix"))),
         h("nav",{className:"max-w-6xl mx-auto px-2 flex gap-1 overflow-x-auto"},
           [
             { id:"dashboard", label:"Dashboard", icon:"chart" },
@@ -936,24 +1037,39 @@ window.addEventListener("error", function (ev) {
                 h(Icon,{name:"trendingDown",size:18,className:"text-orange-500"})),
               h("p",{className:"text-2xl sm:text-3xl font-extrabold text-orange-500"}, formatMoney(resumo.saidas)),
               h("p",{className:"text-[11px] text-zinc-500 mt-1"},"Despesas do mês atual"))),
-          h("section",{className:"grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"},
-            [
-              { label: "Meta Diária", icon: "target", val: metaProgresso.hoje, total: meta.diaria, pct: metaProgresso.pctDiaria },
-              { label: "Meta Semanal", icon: "flame", val: metaProgresso.semana, total: meta.semanal, pct: metaProgresso.pctSemanal }
-            ].map(function(m,i){
-              var pct = Math.min(100, m.pct);
-              return h("div",{key:i,className:"card rounded-2xl p-4"},
-                h("div",{className:"flex items-center justify-between mb-2"},
-                  h("div",{className:"flex items-center gap-2"},
-                    h(Icon,{name:m.icon,size:16,className:"text-yellow-400"}),
-                    h("span",{className:"text-xs uppercase tracking-wider font-semibold text-zinc-300"},m.label)),
-                  h("span",{className:"text-xs font-bold gradient-text"}, m.pct.toFixed(0)+"%")),
-                h("div",{className:"flex items-baseline gap-2 mb-2"},
-                  h("p",{className:"text-xl font-extrabold"}, formatMoney(m.val)),
-                  h("p",{className:"text-xs text-zinc-500"}, "/ "+formatMoney(m.total))),
-                h("div",{className:"h-2 bg-[var(--bg-hover)] rounded-full overflow-hidden"},
-                  h("div",{className:"h-full gradient-bg transition-all",style:{width:pct+"%"}})));
-            })),
+          h("section",null,
+            h("div",{className:"flex items-center justify-between mb-2 px-1"},
+              h("h2",{className:"text-xs uppercase tracking-wider font-semibold text-zinc-400 flex items-center gap-1.5"},
+                h(Icon,{name:"target",size:12,className:"text-yellow-400"})," Suas Metas"),
+              h("button",{onClick:function(){setShowMetaEditor(true);},
+                className:"text-xs text-orange-400 hover:text-orange-300 font-semibold flex items-center gap-1"},
+                h(Icon,{name:"edit",size:11})," Editar")),
+            (meta.diaria<=0 && meta.semanal<=0)
+              ? h("button",{onClick:function(){setShowMetaEditor(true);},
+                  className:"w-full card rounded-2xl p-5 border-dashed border-2 border-yellow-500/30 hover:border-yellow-500/60 transition flex items-center justify-center gap-2 text-yellow-400 font-semibold"},
+                  h(Icon,{name:"target",size:18})," Defina suas metas para acompanhar o progresso")
+              : h("div",{className:"grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"},
+                [
+                  { label: "Meta Diária", icon: "target", val: metaProgresso.hoje, total: meta.diaria, pct: metaProgresso.pctDiaria },
+                  { label: "Meta Semanal", icon: "flame", val: metaProgresso.semana, total: meta.semanal, pct: metaProgresso.pctSemanal }
+                ].map(function(m,i){
+                  var pct = Math.min(100, m.pct);
+                  return h("button",{key:i, type:"button", onClick:function(){setShowMetaEditor(true);},
+                    className:"card card-h rounded-2xl p-4 text-left w-full hover:border-yellow-500/40 transition"},
+                    h("div",{className:"flex items-center justify-between mb-2"},
+                      h("div",{className:"flex items-center gap-2"},
+                        h(Icon,{name:m.icon,size:16,className:"text-yellow-400"}),
+                        h("span",{className:"text-xs uppercase tracking-wider font-semibold text-zinc-300"},m.label)),
+                      h("div",{className:"flex items-center gap-1.5"},
+                        h("span",{className:"text-xs font-bold gradient-text"}, m.pct.toFixed(0)+"%"),
+                        h(Icon,{name:"edit",size:11,className:"text-zinc-500"}))),
+                    h("div",{className:"flex items-baseline gap-2 mb-2"},
+                      h("p",{className:"text-xl font-extrabold"}, formatMoney(m.val)),
+                      h("p",{className:"text-xs text-zinc-500"}, "/ "+(m.total>0?formatMoney(m.total):"defina")),
+                      m.pct>=100 && h("span",{className:"text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold ml-auto"},"✓ ATINGIDA")),
+                    h("div",{className:"h-2 bg-[var(--bg-hover)] rounded-full overflow-hidden"},
+                      h("div",{className:"h-full gradient-bg transition-all",style:{width:pct+"%"}})));
+                }))),
           h("section",{className:"grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4"},
             h("div",{className:"card rounded-2xl p-4 sm:p-5"},
               h("div",{className:"flex items-center gap-2 mb-3"},
@@ -1185,9 +1301,7 @@ window.addEventListener("error", function (ev) {
                             className:"text-zinc-500 hover:text-red-500",title:"Remover"},h(Icon,{name:"trash",size:13})))));
                   })))
         ),
-        h("a",{href:"https://mpago.la/2z5Uj6E",target:"_blank",rel:"noopener noreferrer",
-          className:"sm:hidden flex items-center justify-center gap-2 bg-orange-500/10 border border-orange-500/40 text-orange-400 px-4 py-3 rounded-xl font-bold"},
-          h(Icon,{name:"heart",size:16})," Apoiar Projeto via Pix"),
+        h(ApoioCard,{toast:toastMgr.push}),
         h("footer",{className:"text-center text-[11px] text-zinc-600 pt-2"},
           h("p",null,"FinanceiroPro Elite • dados salvos localmente neste dispositivo"),
           h("p",{className:"mt-1"},"Pressione ",h("kbd",{className:"px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400"},"N"),
@@ -1207,7 +1321,11 @@ window.addEventListener("error", function (ev) {
         transacoes:transacoes, categorias:categorias, carteiras:carteiras, meta:meta, theme:theme,
         setTransacoes:setTransacoes, setCategorias:setCategorias, setCarteiras:setCarteiras,
         setMeta:setMeta, setTheme:setTheme, toast:toastMgr.push,
+        openMetaEditor:function(){ setShowSettings(false); setShowMetaEditor(true); },
         onClose:function(){setShowSettings(false);}}),
+      showMetaEditor && h(MetaEditor,{
+        meta:meta, setMeta:setMeta, toast:toastMgr.push,
+        onClose:function(){setShowMetaEditor(false);}}),
       showOnboarding && h(Onboarding,{onDone:function(){setShowOnboarding(false); save("fp_onboarded",true);}}),
       h(ToastContainer,{toasts:toastMgr.toasts})
     );
