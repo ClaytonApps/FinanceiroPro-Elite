@@ -527,32 +527,104 @@ window.addEventListener("error", function (ev) {
   }
   function Onboarding(props) {
     var s = useState(0); var step = s[0], setStep = s[1];
+    var s2 = useState(false); var dontShow = s2[0], setDontShow = s2[1];
     var slides = [
-      { icon: "wallet", title: "Bem-vindo ao FinanceiroPro Elite",
-        text: "Sua gestão financeira profissional, com foco em motoristas de aplicativo e autônomos." },
-      { icon: "route", title: "Métricas de motorista",
-        text: "Registre KM, horas e ganhos. Veja R$/km, R$/hora, lucro líquido e o melhor horário para rodar." },
-      { icon: "target", title: "Metas, gráficos e relatórios",
-        text: "Acompanhe metas diárias, exporte relatórios em CSV e tenha controle total na palma da mão." }
+      {
+        icon: "wallet", title: "FinanceiroPro Elite",
+        subtitle: "Gestão financeira profissional",
+        text: "Controle completo das suas entradas, saídas, metas e lucro líquido — em um único app, gratuito e sem anúncios.",
+        highlights: [
+          { icon: "check", text: "100% gratuito e sem cadastro" },
+          { icon: "check", text: "Dados ficam só no seu dispositivo" },
+          { icon: "check", text: "Funciona offline, instalável como app" }
+        ]
+      },
+      {
+        icon: "chart", title: "Dashboard Inteligente",
+        subtitle: "Sua vida financeira em um só lugar",
+        text: "Visualize saldo total, entradas e saídas do mês, evolução do saldo e distribuição de despesas em tempo real.",
+        highlights: [
+          { icon: "trendingUp", text: "Cards de resumo (saldo, entradas, saídas)" },
+          { icon: "chart", text: "Gráficos de linha e pizza" },
+          { icon: "creditCard", text: "Saldo por carteira (conta, dinheiro, cartão)" }
+        ]
+      },
+      {
+        icon: "car", title: "Para Motoristas de App",
+        subtitle: "Métricas que fazem a diferença",
+        text: "Registre cada jornada com hodômetro, hora início/fim e descubra exatamente quanto está ganhando — e quando.",
+        highlights: [
+          { icon: "route", text: "R$ por km e R$ por hora (bruto e líquido)" },
+          { icon: "fuel", text: "Custo real por km (combustível + manutenção)" },
+          { icon: "clock", text: "Heatmap dia × hora — o melhor horário para rodar" }
+        ]
+      },
+      {
+        icon: "target", title: "Metas e Análise",
+        subtitle: "Caminhe rumo aos seus objetivos",
+        text: "Defina metas diárias e semanais, acompanhe seu score de saúde financeira e veja projeções para o fim do mês.",
+        highlights: [
+          { icon: "flame", text: "Metas com sugestões e auto-cálculo" },
+          { icon: "activity", text: "Score de Saúde Financeira (0–100)" },
+          { icon: "barChart", text: "Comparativo 6 meses + projeções" }
+        ]
+      },
+      {
+        icon: "heart", title: "Apoie o Projeto 🧡",
+        subtitle: "Mantenha o app vivo",
+        text: "Este app é inteiramente gratuito, sem anúncios e sem coleta de dados. Se ele te ajudar, considere apoiar com qualquer valor via Pix no Mercado Pago.",
+        highlights: [
+          { icon: "check", text: "Apoio voluntário, qualquer valor" },
+          { icon: "check", text: "Pix instantâneo no Mercado Pago" },
+          { icon: "check", text: "Cada apoio mantém o projeto em evolução" }
+        ],
+        cta: { url: "https://mpago.la/2z5Uj6E", label: "Apoiar via Pix" }
+      }
     ];
     var slide = slides[step];
-    return h("div",{className:"fixed inset-0 modal-overlay z-[80] flex items-center justify-center p-4"},
-      h("div",{className:"card rounded-3xl w-full max-w-md p-8 text-center"},
-        h("div",{className:"w-20 h-20 rounded-full gradient-bg mx-auto flex items-center justify-center text-black mb-5"},
-          h(Icon,{name:slide.icon,size:36})),
-        h("h2",{className:"text-2xl font-extrabold gradient-text mb-3"}, slide.title),
-        h("p",{className:"text-zinc-400 mb-6"}, slide.text),
-        h("div",{className:"flex justify-center gap-2 mb-6"},
-          slides.map(function(_,i){ return h("div",{key:i,
-            className:"h-1.5 rounded-full transition-all",
-            style:{ width: i===step?24:8, background: i===step?"#FF6B00":"#3a3a3a" }}); })),
-        h("div",{className:"flex gap-3"},
-          step>0 && h("button",{onClick:function(){setStep(step-1);},
-            className:"flex-1 card py-3 rounded-xl font-semibold"}, "Voltar"),
-          h("button",{onClick:function(){
-            if (step<slides.length-1) setStep(step+1); else props.onDone();
-          }, className:"flex-1 gradient-bg text-black py-3 rounded-xl font-bold"},
-            step<slides.length-1?"Próximo":"Começar"))));
+    var isLast = step === slides.length-1;
+
+    function done() { props.onDone(dontShow); }
+
+    return h("div",{className:"fixed inset-0 modal-overlay z-[80] flex items-center justify-center p-3 sm:p-4"},
+      h("div",{className:"card rounded-3xl w-full max-w-lg max-h-[95vh] overflow-y-auto relative"},
+        h("button",{onClick:done,
+          className:"absolute top-3 right-3 text-zinc-500 hover:text-white text-xs font-semibold flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition z-10"},
+          "Pular ", h(Icon,{name:"x",size:12})),
+        h("div",{className:"p-6 sm:p-8 text-center"},
+          h("div",{className:"w-20 h-20 sm:w-24 sm:h-24 rounded-2xl gradient-bg mx-auto flex items-center justify-center text-black mb-4 shadow-lg"},
+            h(Icon,{name:slide.icon,size:42})),
+          h("p",{className:"text-[10px] uppercase tracking-widest text-orange-400 font-bold mb-1"}, slide.subtitle),
+          h("h2",{className:"text-2xl sm:text-3xl font-extrabold gradient-text mb-3"}, slide.title),
+          h("p",{className:"text-sm sm:text-base text-zinc-300 mb-5 leading-relaxed"}, slide.text),
+          h("ul",{className:"text-left space-y-2 mb-5 bg-black/20 rounded-xl p-4 border border-[var(--border)]"},
+            slide.highlights.map(function(hl,i){
+              return h("li",{key:i,className:"flex items-start gap-2.5 text-sm"},
+                h("span",{className:"w-6 h-6 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400 shrink-0 mt-0.5"},
+                  h(Icon,{name:hl.icon,size:13})),
+                h("span",{className:"text-zinc-300"},hl.text));
+            })),
+          slide.cta && h("a",{href:slide.cta.url,target:"_blank",rel:"noopener noreferrer",
+            className:"pulse-orange w-full block gradient-bg text-black px-5 py-3 rounded-xl font-extrabold flex items-center justify-center gap-2 mb-4 hover:scale-[1.02] transition"},
+            h(Icon,{name:"heart",size:18})," ", slide.cta.label),
+          h("div",{className:"flex justify-center gap-1.5 mb-5"},
+            slides.map(function(_,i){ return h("div",{key:i,
+              className:"h-1.5 rounded-full transition-all",
+              style:{ width: i===step?28:8, background: i===step?"#FF6B00":"#3a3a3a" }}); })),
+          isLast && h("label",{className:"flex items-center justify-center gap-2 text-xs text-zinc-400 cursor-pointer mb-4"},
+            h("input",{type:"checkbox",checked:dontShow,
+              onChange:function(e){setDontShow(e.target.checked);},
+              className:"w-4 h-4 accent-orange-500"}),
+            "Não mostrar esta tela novamente"),
+          h("div",{className:"flex gap-2"},
+            step>0 && h("button",{onClick:function(){setStep(step-1);},
+              className:"flex-1 card py-3 rounded-xl font-semibold flex items-center justify-center gap-1"},
+              h(Icon,{name:"chevronLeft",size:14})," Voltar"),
+            h("button",{onClick:function(){ if (isLast) done(); else setStep(step+1); },
+              className:"flex-[2] gradient-bg text-black py-3 rounded-xl font-extrabold flex items-center justify-center gap-1"},
+              isLast?"Começar a usar":"Próximo",
+              h(Icon,{name:"chevronRight",size:14})))
+        )));
   }
   function CategoriasManager(props) {
     var s = useState(false); var adding = s[0], setAdding = s[1];
@@ -686,6 +758,11 @@ window.addEventListener("error", function (ev) {
             h("button",{onClick:function(){props.openMetaEditor();},
               className:"w-full card py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold text-yellow-400 border border-yellow-500/30"},
               h(Icon,{name:"target",size:14})," Configurar metas (diária e semanal)")),
+          h("div",null,
+            h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Tour"),
+            h("button",{onClick:function(){props.openDemo();},
+              className:"w-full card py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold text-orange-400 border border-orange-500/30"},
+              h(Icon,{name:"chart",size:14})," Ver tela de demonstração")),
           h("div",null,
             h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Backup"),
             h("div",{className:"grid grid-cols-2 gap-2"},
@@ -831,7 +908,7 @@ window.addEventListener("error", function (ev) {
     var theme=s11[0], setTheme=s11[1];
     var s12 = useState(false); var showCats=s12[0], setShowCats=s12[1];
     var s13 = useState(false); var showSettings=s13[0], setShowSettings=s13[1];
-    var s14 = useState(function(){ return !load("fp_onboarded", false); });
+    var s14 = useState(function(){ return !load("fp_skip_demo", false); });
     var showOnboarding=s14[0], setShowOnboarding=s14[1];
     var s15 = useState("dashboard"); var tab=s15[0], setTab=s15[1];
     var s16 = useState(false); var showMetaEditor=s16[0], setShowMetaEditor=s16[1];
@@ -1408,11 +1485,15 @@ window.addEventListener("error", function (ev) {
         setTransacoes:setTransacoes, setCategorias:setCategorias, setCarteiras:setCarteiras,
         setMeta:setMeta, setTheme:setTheme, toast:toastMgr.push,
         openMetaEditor:function(){ setShowSettings(false); setShowMetaEditor(true); },
+        openDemo:function(){ setShowSettings(false); save("fp_skip_demo", false); setShowOnboarding(true); },
         onClose:function(){setShowSettings(false);}}),
       showMetaEditor && h(MetaEditor,{
         meta:meta, setMeta:setMeta, toast:toastMgr.push,
         onClose:function(){setShowMetaEditor(false);}}),
-      showOnboarding && h(Onboarding,{onDone:function(){setShowOnboarding(false); save("fp_onboarded",true);}}),
+      showOnboarding && h(Onboarding,{onDone:function(dontShowAgain){
+        setShowOnboarding(false);
+        if (dontShowAgain) save("fp_skip_demo", true);
+      }}),
       h(ToastContainer,{toasts:toastMgr.toasts})
     );
   }
