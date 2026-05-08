@@ -328,6 +328,28 @@ window.addEventListener("error", function (ev) {
     var s6 = useState((editing && editing.km) || ""); var km=s6[0], setKm=s6[1];
     var s7 = useState((editing && editing.horas) || ""); var horas=s7[0], setHoras=s7[1];
     var s8 = useState((editing && editing.hora) || ""); var hora=s8[0], setHora=s8[1];
+    var s12 = useState((editing && editing.kmInicial!=null) ? String(editing.kmInicial) : "");
+    var kmInicial=s12[0], setKmInicial=s12[1];
+    var s13 = useState((editing && editing.kmFinal!=null) ? String(editing.kmFinal) : "");
+    var kmFinal=s13[0], setKmFinal=s13[1];
+    var s14 = useState((editing && editing.horaInicio) || ""); var horaInicio=s14[0], setHoraInicio=s14[1];
+    var s15 = useState((editing && editing.horaFim) || ""); var horaFim=s15[0], setHoraFim=s15[1];
+
+    function calcKmTotal() {
+      var i = parseFloat(kmInicial), f = parseFloat(kmFinal);
+      if (isNaN(i) || isNaN(f)) return null;
+      var d = f - i;
+      return d > 0 ? d : null;
+    }
+    function calcHorasTotal() {
+      if (!horaInicio || !horaFim) return null;
+      var pi = horaInicio.split(":"), pf = horaFim.split(":");
+      var mi = parseInt(pi[0],10)*60 + parseInt(pi[1]||"0",10);
+      var mf = parseInt(pf[0],10)*60 + parseInt(pf[1]||"0",10);
+      var diff = mf - mi;
+      if (diff < 0) diff += 24*60;
+      return diff > 0 ? +(diff/60).toFixed(2) : null;
+    }
     var s9 = useState((editing && editing.carteira) || carteiras[0].id); var carteira=s9[0], setCarteira=s9[1];
     var s10 = useState((editing && editing.recorrente) || false); var recorrente=s10[0], setRecorrente=s10[1];
     var s11 = useState((editing && editing.comprovante) || ""); var comprovante=s11[0], setComprovante=s11[1];
@@ -351,13 +373,23 @@ window.addEventListener("error", function (ev) {
     function submit(ev) {
       ev.preventDefault();
       if (!descricao.trim() || !valor || parseFloat(valor)<=0) return;
+      var isVariavel = categoria==="variavel";
+      var kmCalc = calcKmTotal();
+      var hCalc = calcHorasTotal();
+      var kmFinalVal = isVariavel ? (kmCalc!=null ? kmCalc : (km ? parseFloat(km) : null)) : null;
+      var horasFinalVal = isVariavel ? (hCalc!=null ? hCalc : (horas ? parseFloat(horas) : null)) : null;
+      var horaHeatmap = horaInicio || hora || null;
       var t = {
         id: (editing && editing.id) || uid(),
         tipo: tipo, categoria: categoria, descricao: descricao.trim(),
-        valor: parseFloat(valor), data: data, hora: hora || null,
+        valor: parseFloat(valor), data: data, hora: horaHeatmap,
         carteira: carteira,
-        km: categoria==="variavel" && km ? parseFloat(km) : null,
-        horas: categoria==="variavel" && horas ? parseFloat(horas) : null,
+        km: kmFinalVal,
+        horas: horasFinalVal,
+        kmInicial: isVariavel && kmInicial!=="" ? parseFloat(kmInicial) : null,
+        kmFinal: isVariavel && kmFinal!=="" ? parseFloat(kmFinal) : null,
+        horaInicio: isVariavel && horaInicio ? horaInicio : null,
+        horaFim: isVariavel && horaFim ? horaFim : null,
         recorrente: !!recorrente,
         comprovante: comprovante || null,
         criadoEm: (editing && editing.criadoEm) || new Date().toISOString()
@@ -412,19 +444,69 @@ window.addEventListener("error", function (ev) {
             h("input",{type:"time",value:hora,onChange:function(e){setHora(e.target.value);},
               className:"input w-full rounded-xl px-4 py-3"})),
           tipo==="entrada" && categoria==="variavel" &&
-            h("div",{className:"grid grid-cols-2 gap-3 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-xl"},
+            h("div",{className:"p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-xl space-y-4"},
+              h("div",{className:"flex items-center gap-2 text-yellow-400"},
+                h(Icon,{name:"car",size:14}),
+                h("span",{className:"text-xs uppercase tracking-wide font-bold"},"Dados da Jornada")),
               h("div",null,
-                h("label",{className:"text-xs text-yellow-400 uppercase tracking-wide mb-1 flex items-center gap-1"},
-                  h(Icon,{name:"route",size:12})," KM rodados"),
-                h("input",{type:"number",step:"0.1",min:"0",value:km,
-                  onChange:function(e){setKm(e.target.value);},placeholder:"0",
-                  className:"input w-full rounded-xl px-3 py-2"})),
+                h("p",{className:"text-[10px] uppercase tracking-wider text-yellow-400/80 font-semibold mb-2 flex items-center gap-1"},
+                  h(Icon,{name:"route",size:11})," Hodômetro (km do veículo)"),
+                h("div",{className:"grid grid-cols-2 gap-2"},
+                  h("div",null,
+                    h("label",{className:"text-[10px] text-zinc-400 mb-1 block"},"Km inicial"),
+                    h("input",{type:"number",inputMode:"decimal",step:"0.1",min:"0",value:kmInicial,
+                      onChange:function(e){setKmInicial(e.target.value);},placeholder:"Ex: 45230",
+                      className:"input w-full rounded-lg px-3 py-2 text-sm"})),
+                  h("div",null,
+                    h("label",{className:"text-[10px] text-zinc-400 mb-1 block"},"Km final"),
+                    h("input",{type:"number",inputMode:"decimal",step:"0.1",min:"0",value:kmFinal,
+                      onChange:function(e){setKmFinal(e.target.value);},placeholder:"Ex: 45380",
+                      className:"input w-full rounded-lg px-3 py-2 text-sm"})))),
               h("div",null,
-                h("label",{className:"text-xs text-yellow-400 uppercase tracking-wide mb-1 flex items-center gap-1"},
-                  h(Icon,{name:"clock",size:12})," Horas"),
-                h("input",{type:"number",step:"0.1",min:"0",value:horas,
-                  onChange:function(e){setHoras(e.target.value);},placeholder:"0",
-                  className:"input w-full rounded-xl px-3 py-2"}))),
+                h("p",{className:"text-[10px] uppercase tracking-wider text-yellow-400/80 font-semibold mb-2 flex items-center gap-1"},
+                  h(Icon,{name:"clock",size:11})," Período trabalhado"),
+                h("div",{className:"grid grid-cols-2 gap-2"},
+                  h("div",null,
+                    h("label",{className:"text-[10px] text-zinc-400 mb-1 block"},"Hora iniciada"),
+                    h("input",{type:"time",value:horaInicio,
+                      onChange:function(e){setHoraInicio(e.target.value);},
+                      className:"input w-full rounded-lg px-3 py-2 text-sm"})),
+                  h("div",null,
+                    h("label",{className:"text-[10px] text-zinc-400 mb-1 block"},"Hora finalizada"),
+                    h("input",{type:"time",value:horaFim,
+                      onChange:function(e){setHoraFim(e.target.value);},
+                      className:"input w-full rounded-lg px-3 py-2 text-sm"})))),
+              (function(){
+                var k = calcKmTotal(), hT = calcHorasTotal();
+                var v = parseFloat(valor) || 0;
+                if (k==null && hT==null) return null;
+                return h("div",{className:"grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 bg-black/30 rounded-lg border border-yellow-500/30"},
+                  h("div",null,
+                    h("p",{className:"text-[9px] uppercase text-zinc-500"},"Total KM"),
+                    h("p",{className:"text-sm font-bold text-white"}, k!=null ? k.toFixed(1)+" km" : "—")),
+                  h("div",null,
+                    h("p",{className:"text-[9px] uppercase text-zinc-500"},"Total Horas"),
+                    h("p",{className:"text-sm font-bold text-white"}, hT!=null ? hT.toFixed(2)+" h" : "—")),
+                  h("div",null,
+                    h("p",{className:"text-[9px] uppercase text-zinc-500"},"R$/km"),
+                    h("p",{className:"text-sm font-bold gradient-text"}, k && v ? formatMoney(v/k) : "—")),
+                  h("div",null,
+                    h("p",{className:"text-[9px] uppercase text-zinc-500"},"R$/hora"),
+                    h("p",{className:"text-sm font-bold gradient-text"}, hT && v ? formatMoney(v/hT) : "—")));
+              })(),
+              h("details",{className:"text-xs"},
+                h("summary",{className:"text-zinc-500 cursor-pointer hover:text-zinc-300"},"Modo manual (não usar hodômetro)"),
+                h("div",{className:"grid grid-cols-2 gap-2 mt-2"},
+                  h("div",null,
+                    h("label",{className:"text-[10px] text-zinc-400 mb-1 block"},"KM total (manual)"),
+                    h("input",{type:"number",step:"0.1",min:"0",value:km,
+                      onChange:function(e){setKm(e.target.value);},placeholder:"0",
+                      className:"input w-full rounded-lg px-3 py-2 text-sm"})),
+                  h("div",null,
+                    h("label",{className:"text-[10px] text-zinc-400 mb-1 block"},"Horas (manual)"),
+                    h("input",{type:"number",step:"0.1",min:"0",value:horas,
+                      onChange:function(e){setHoras(e.target.value);},placeholder:"0",
+                      className:"input w-full rounded-lg px-3 py-2 text-sm"}))))),
           h("label",{className:"flex items-center gap-3 cursor-pointer p-3 card rounded-xl"},
             h("input",{type:"checkbox",checked:recorrente,onChange:function(e){setRecorrente(e.target.checked);},
               className:"w-4 h-4 accent-orange-500"}),
@@ -1286,10 +1368,14 @@ window.addEventListener("error", function (ev) {
                           h("span",null,c.label),
                           h("span",null,"•"),
                           h("span",null,formatDate(t.data)),
-                          t.hora ? h(Fragment,null,h("span",null,"•"),h("span",null,t.hora)) : null,
+                          (t.horaInicio && t.horaFim)
+                            ? h(Fragment,null,h("span",null,"•"),h("span",{className:"text-yellow-500/80"},t.horaInicio+"→"+t.horaFim))
+                            : (t.hora ? h(Fragment,null,h("span",null,"•"),h("span",null,t.hora)) : null),
                           h("span",null,"•"),
                           h("span",{style:{color:w.color}}, w.label),
-                          t.km ? h(Fragment,null,h("span",null,"•"),h("span",null,t.km+" km")) : null,
+                          (t.kmInicial!=null && t.kmFinal!=null)
+                            ? h(Fragment,null,h("span",null,"•"),h("span",{className:"text-yellow-500/80"},t.kmInicial+"→"+t.kmFinal+" km ("+t.km.toFixed(1)+")"))
+                            : (t.km ? h(Fragment,null,h("span",null,"•"),h("span",null,t.km+" km")) : null),
                           t.horas ? h(Fragment,null,h("span",null,"•"),h("span",null,t.horas+" h")) : null)),
                       h("div",{className:"text-right shrink-0"},
                         h("p",{className:"font-extrabold text-sm sm:text-base whitespace-nowrap "+(isEnt?"text-green-500":"text-red-500")},
