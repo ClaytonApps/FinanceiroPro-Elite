@@ -1,0 +1,1235 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a1a1a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>FinanceiroPro Elite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --bg-elevated: #242424;
+    --bg-hover: #2e2e2e;
+    --border: #2e2e2e;
+    --border-strong: #3a3a3a;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --text-dim: #71717a;
+    --primary: #FFB800;
+    --primary-2: #FF6B00;
+  }
+  html, body { background: var(--bg); color: var(--text); }
+  body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+  .gradient-text {
+    background: linear-gradient(90deg, #FFB800 0%, #FF6B00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-bg { background: linear-gradient(135deg, #FFB800 0%, #FF6B00 100%); }
+  .card { background: var(--bg-elevated); border: 1px solid var(--border); }
+  .card-h:hover { border-color: var(--border-strong); }
+  .input { background: #2a2a2a; border: 1px solid var(--border); color: #fff; }
+  .input:focus { border-color: var(--primary-2); outline: none; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--primary-2); }
+  .modal-overlay { backdrop-filter: blur(8px); background: rgba(0,0,0,0.7); }
+  input, select, textarea { color-scheme: dark; }
+  .pulse-orange { animation: pulseOrange 2s infinite; }
+  @keyframes pulseOrange {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.7); }
+    50% { box-shadow: 0 0 0 12px rgba(255, 107, 0, 0); }
+  }
+  .toast-in { animation: toastIn 0.25s ease-out; }
+  @keyframes toastIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .pie-slice { transition: transform 0.2s; transform-origin: 50% 50%; }
+  .pie-slice:hover { transform: scale(1.04); }
+  #loader { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: 700; z-index: 100; font-family: 'Plus Jakarta Sans', sans-serif; }
+  /* Light theme */
+  body.light {
+    --bg: #f5f5f7; --bg-elevated: #ffffff; --bg-hover: #f0f0f0;
+    --border: #e5e5e7; --border-strong: #d1d1d6;
+    --text: #1c1c1e; --text-muted: #48484a; --text-dim: #8e8e93;
+  }
+  body.light .input { background: #fafafa; }
+  body.light .modal-overlay { background: rgba(255,255,255,0.6); }
+  /* Safe areas iOS */
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  /* Tabs */
+  .tab-btn { color: var(--text-dim); }
+  .tab-btn.active { color: var(--primary); }
+  .tab-btn.active .tab-indicator { background: linear-gradient(90deg, #FFB800, #FF6B00); }
+</style>
+</head>
+<body>
+<div id="loader">Carregando FinanceiroPro Elite…</div>
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+
+<script>
+window.addEventListener("error", function (ev) {
+  var root = document.getElementById("root");
+  var loader = document.getElementById("loader");
+  if (loader) loader.remove();
+  if (root && !root.hasChildNodes()) {
+    root.innerHTML = '<div style="padding:24px;color:#FF6B00;font-family:monospace">'
+      + '<h2 style="margin-bottom:8px">Erro ao carregar</h2>'
+      + '<pre style="white-space:pre-wrap;font-size:12px">'
+      + ((ev.error && ev.error.stack) || ev.message || "erro desconhecido")
+      + '</pre></div>';
+  }
+});
+</script>
+
+<script>
+(function () {
+  if (typeof React === "undefined" || typeof ReactDOM === "undefined") {
+    document.getElementById("loader").innerText = "Falha ao carregar React via CDN.";
+    return;
+  }
+
+  var useState = React.useState, useEffect = React.useEffect, useMemo = React.useMemo, useRef = React.useRef;
+  var Fragment = React.Fragment, h = React.createElement;
+  var ICON_PATHS = {
+    wallet: "M21 12V7H5a2 2 0 0 1 0-4h14v4M3 5v14a2 2 0 0 0 2 2h16v-5M16 12h5v5h-5a2.5 2.5 0 0 1 0-5z",
+    trendingUp: "M22 7l-8.5 8.5-5-5L2 17M16 7h6v6",
+    trendingDown: "M22 17l-8.5-8.5-5 5L2 7M16 17h6v-6",
+    plus: "M12 5v14M5 12h14",
+    minus: "M5 12h14",
+    car: "M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2",
+    fuel: "M3 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18M1 22h18",
+    utensils: "M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3z",
+    home: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10",
+    gamepad: "M6 12h4m-2-2v4M15 11h.01M18 13h.01",
+    wrench: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.121 2.121 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z",
+    filter: "M22 3H2l8 9.46V19l4 2v-8.54z",
+    trash: "M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+    x: "M18 6L6 18M6 6l12 12",
+    dollar: "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",
+    clock: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2",
+    route: "M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+    heart: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z",
+    chart: "M3 3v18h18M7 12l4-4 4 4 6-6",
+    list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+    edit: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",
+    receipt: "M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z",
+    target: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
+    flame: "M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z",
+    sun: "M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z",
+    moon: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+    settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.36.21.79.34 1.27.34H21a2 2 0 0 1 0 4h-.09c-.51 0-.94.21-1.51.66z",
+    download: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
+    upload: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
+    search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35",
+    creditCard: "M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM1 10h22",
+    repeat: "M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3",
+    paperclip: "M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48",
+    fileText: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8",
+    activity: "M22 12h-4l-3 9L9 3l-3 9H2",
+    pieIcon: "M21.21 15.89A10 10 0 1 1 8 2.83M22 12A10 10 0 0 0 12 2v10z",
+    barChart: "M12 20V10M18 20V4M6 20v-4",
+    bell: "M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+    chevronLeft: "M15 18l-6-6 6-6",
+    chevronRight: "M9 18l6-6-6-6",
+    check: "M20 6L9 17l-5-5",
+    palette: "M12 22a10 10 0 1 1 0-20 8 8 0 0 1 8 8c0 4-3 4-3 7s-2 5-5 5zM6.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM10 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM15 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
+  };
+  function Icon(props) {
+    var size = props.size || 20;
+    return h("svg", {
+      xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24",
+      fill: "none", stroke: "currentColor", strokeWidth: 2,
+      strokeLinecap: "round", strokeLinejoin: "round", className: props.className || ""
+    }, h("path", { d: ICON_PATHS[props.name] || ICON_PATHS.wallet }));
+  }
+  var DEFAULT_CATEGORIAS = [
+    { id: "salario", label: "Salário Fixo", icon: "dollar", color: "#22c55e", tipo: "entrada", builtin: true },
+    { id: "variavel", label: "Ganhos Variáveis (App)", icon: "route", color: "#10b981", tipo: "entrada", builtin: true },
+    { id: "outros_entrada", label: "Outras Entradas", icon: "trendingUp", color: "#34d399", tipo: "entrada", builtin: true },
+    { id: "combustivel", label: "Combustível", icon: "fuel", color: "#FF6B00", tipo: "saida", builtin: true },
+    { id: "manutencao", label: "Manutenção", icon: "wrench", color: "#f97316", tipo: "saida", builtin: true },
+    { id: "alimentacao", label: "Alimentação", icon: "utensils", color: "#FFB800", tipo: "saida", builtin: true },
+    { id: "lazer", label: "Lazer", icon: "gamepad", color: "#a855f7", tipo: "saida", builtin: true },
+    { id: "contas", label: "Contas Fixas", icon: "home", color: "#3b82f6", tipo: "saida", builtin: true },
+    { id: "outros_saida", label: "Outras Saídas", icon: "receipt", color: "#ef4444", tipo: "saida", builtin: true }
+  ];
+  var DEFAULT_CARTEIRAS = [
+    { id: "conta", label: "Conta Bancária", icon: "wallet", color: "#3b82f6" },
+    { id: "dinheiro", label: "Dinheiro", icon: "dollar", color: "#22c55e" },
+    { id: "cartao", label: "Cartão de Crédito", icon: "creditCard", color: "#a855f7" }
+  ];
+  var ICON_OPTIONS = ["wallet","dollar","route","fuel","wrench","utensils","gamepad","home","receipt","creditCard","heart","car","flame","target"];
+  var COLOR_OPTIONS = ["#22c55e","#10b981","#3b82f6","#a855f7","#FF6B00","#f97316","#FFB800","#ef4444","#ec4899","#06b6d4"];
+
+  function formatMoney(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
+  function formatDate(d) { return new Date(d + "T00:00:00").toLocaleDateString("pt-BR"); }
+  function todayKey() { return new Date().toISOString().split("T")[0]; }
+  function monthKey(d) { return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0"); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function load(key, fb) { try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fb; } catch(e) { return fb; } }
+  function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
+  function useToasts() {
+    var s = useState([]); var toasts = s[0], setToasts = s[1];
+    function push(msg, type) {
+      var id = uid();
+      setToasts(function(prev){ return prev.concat([{ id: id, msg: msg, type: type || "success" }]); });
+      setTimeout(function(){
+        setToasts(function(prev){ return prev.filter(function(t){ return t.id !== id; }); });
+      }, 2800);
+    }
+    return { toasts: toasts, push: push };
+  }
+  function ToastContainer(props) {
+    return h("div", { className: "fixed bottom-24 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 pointer-events-none w-[90vw] max-w-sm" },
+      props.toasts.map(function(t){
+        var color = t.type === "error" ? "#ef4444" : t.type === "info" ? "#3b82f6" : "#22c55e";
+        return h("div", {
+          key: t.id,
+          className: "toast-in card rounded-xl px-4 py-3 flex items-center gap-3 shadow-2xl",
+          style: { borderLeftColor: color, borderLeftWidth: "4px" }
+        },
+          h(Icon, { name: t.type === "error" ? "x" : "check", size: 18, className: "shrink-0", style: { color: color } }),
+          h("span", { className: "text-sm" }, t.msg)
+        );
+      })
+    );
+  }
+  function LineChart(props) {
+    var data = props.data || [];
+    var W = 600, H = 200, P = 40;
+    if (data.length === 0) return h("div", { className: "h-[200px] flex items-center justify-center text-zinc-500" }, "sem dados");
+    var values = data.map(function(d){ return d.saldo; });
+    var min = Math.min.apply(null, values), max = Math.max.apply(null, values);
+    if (min === max) { min -= 1; max += 1; }
+    var range = max - min, stepX = (W - P*2) / Math.max(1, data.length-1);
+    function x(i){ return P + i*stepX; }
+    function y(v){ return P + (1-(v-min)/range)*(H-P*2); }
+    var pathD = data.map(function(d,i){ return (i===0?"M":"L")+x(i)+","+y(d.saldo); }).join(" ");
+    var areaD = pathD + " L"+x(data.length-1)+","+(H-P)+" L"+x(0)+","+(H-P)+" Z";
+    var grids = [];
+    for (var k=0;k<=4;k++){
+      var gy = P + (k*(H-P*2))/4, gv = max - (k*range)/4;
+      grids.push(h("g",{key:"g"+k},
+        h("line",{x1:P,x2:W-P,y1:gy,y2:gy,stroke:"#2e2e2e",strokeDasharray:"3 3"}),
+        h("text",{x:4,y:gy+4,fontSize:10,fill:"#71717a"}, "R$"+(gv/1000).toFixed(1)+"k")
+      ));
+    }
+    var labels = []; var step = Math.max(1, Math.floor(data.length/6));
+    for (var j=0;j<data.length;j+=step){
+      labels.push(h("text",{key:"l"+j,x:x(j),y:H-8,fontSize:9,fill:"#71717a",textAnchor:"middle"}, data[j].dia));
+    }
+    return h("svg",{viewBox:"0 0 "+W+" "+H,width:"100%",height:200,preserveAspectRatio:"none"},
+      h("defs",null,
+        h("linearGradient",{id:"lineGrad",x1:"0",y1:"0",x2:"1",y2:"0"},
+          h("stop",{offset:"0%",stopColor:"#FFB800"}), h("stop",{offset:"100%",stopColor:"#FF6B00"})),
+        h("linearGradient",{id:"areaGrad",x1:"0",y1:"0",x2:"0",y2:"1"},
+          h("stop",{offset:"0%",stopColor:"#FF6B00",stopOpacity:0.25}),
+          h("stop",{offset:"100%",stopColor:"#FF6B00",stopOpacity:0}))
+      ), grids,
+      h("path",{d:areaD,fill:"url(#areaGrad)"}),
+      h("path",{d:pathD,fill:"none",stroke:"url(#lineGrad)",strokeWidth:2.5}),
+      labels);
+  }
+
+  function PieChart(props) {
+    var data = props.data || [];
+    var total = data.reduce(function(a,d){return a+d.value;},0);
+    if (total === 0) return h("div",{className:"h-[220px] flex flex-col items-center justify-center text-zinc-500"},
+      h(Icon,{name:"receipt",size:40,className:"mb-2 opacity-30"}),
+      h("p",{className:"text-sm"},"Sem dados"));
+    var cx=110,cy=110,R=90,r=50, angle=-Math.PI/2;
+    var slices = data.map(function(d,i){
+      var frac=d.value/total, a0=angle, a1=angle+frac*Math.PI*2; angle=a1;
+      var large = frac>0.5?1:0;
+      var x0=cx+R*Math.cos(a0),y0=cy+R*Math.sin(a0),x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1);
+      var xi0=cx+r*Math.cos(a1),yi0=cy+r*Math.sin(a1),xi1=cx+r*Math.cos(a0),yi1=cy+r*Math.sin(a0);
+      var path="M"+x0+","+y0+" A"+R+","+R+" 0 "+large+" 1 "+x1+","+y1+
+        " L"+xi0+","+yi0+" A"+r+","+r+" 0 "+large+" 0 "+xi1+","+yi1+" Z";
+      return h("path",{key:i,d:path,fill:d.color,className:"pie-slice"},
+        h("title",null,d.name+": "+formatMoney(d.value)));
+    });
+    var legend = data.map(function(d,i){
+      return h("div",{key:i,className:"flex items-center gap-2 text-xs"},
+        h("span",{style:{background:d.color,width:10,height:10,borderRadius:2,display:"inline-block"}}),
+        h("span",{className:"text-zinc-300 truncate flex-1"},d.name),
+        h("span",{className:"text-zinc-500"},((d.value/total)*100).toFixed(0)+"%"));
+    });
+    return h("div",{className:"flex flex-col sm:flex-row items-center gap-4"},
+      h("svg",{viewBox:"0 0 220 220",width:200,height:200},slices),
+      h("div",{className:"flex flex-col gap-1.5 w-full sm:flex-1"},legend));
+  }
+
+  function BarChart(props) {
+    var data = props.data || [];
+    if (data.length === 0) return h("div",{className:"h-[200px] flex items-center justify-center text-zinc-500"},"sem dados");
+    var W=600, H=200, P=36;
+    var max = Math.max.apply(null, data.map(function(d){ return Math.max(d.entrada||0, d.saida||0); })) || 1;
+    var bw = (W-P*2)/data.length, gap = bw*0.15, bb = (bw-gap*2)/2;
+    function bh(v){ return (v/max)*(H-P*2); }
+    var bars = [];
+    data.forEach(function(d,i){
+      var bx = P + i*bw + gap;
+      var he = bh(d.entrada||0), hs = bh(d.saida||0);
+      bars.push(h("rect",{key:"e"+i,x:bx,y:H-P-he,width:bb,height:he,fill:"#22c55e",rx:3},
+        h("title",null,d.label+" entrada: "+formatMoney(d.entrada))));
+      bars.push(h("rect",{key:"s"+i,x:bx+bb+2,y:H-P-hs,width:bb,height:hs,fill:"#FF6B00",rx:3},
+        h("title",null,d.label+" saída: "+formatMoney(d.saida))));
+      bars.push(h("text",{key:"l"+i,x:bx+bb,y:H-12,fontSize:10,fill:"#a1a1aa",textAnchor:"middle"},d.label));
+    });
+    return h("svg",{viewBox:"0 0 "+W+" "+H,width:"100%",height:200,preserveAspectRatio:"none"}, bars);
+  }
+
+  function Heatmap(props) {
+    var matrix = props.matrix;
+    var max = 0;
+    for (var d=0; d<7; d++) for (var hr=0; hr<24; hr++) if (matrix[d][hr]>max) max = matrix[d][hr];
+    var dias = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+    if (max === 0) return h("div",{className:"h-[160px] flex items-center justify-center text-zinc-500 text-sm"},"Adicione ganhos variáveis com horário para ver o heatmap");
+    var rows = [];
+    for (var i=0; i<7; i++) {
+      var cells = [h("div",{key:"d",className:"text-[10px] text-zinc-500 w-8 shrink-0"},dias[i])];
+      for (var hh=0; hh<24; hh++) {
+        var v = matrix[i][hh], op = max>0 ? v/max : 0;
+        cells.push(h("div",{
+          key:hh, title: dias[i]+" "+hh+"h: "+formatMoney(v),
+          className:"flex-1 h-5 rounded-sm",
+          style:{ background: v>0 ? "rgba(255,107,0,"+(0.15+op*0.85)+")" : "#2a2a2a" }
+        }));
+      }
+      rows.push(h("div",{key:i,className:"flex gap-0.5 items-center"}, cells));
+    }
+    var hourLabels = [h("div",{key:"sp",className:"w-8"})];
+    for (var hr2=0; hr2<24; hr2+=4) {
+      hourLabels.push(h("div",{key:hr2,className:"flex-1 text-[9px] text-zinc-600 text-left", style:{minWidth: (24/4)+"%"}}, hr2+"h"));
+    }
+    return h("div",{className:"flex flex-col gap-0.5"}, rows);
+  }
+  function TransactionForm(props) {
+    var editing = props.editing, categorias = props.categorias, carteiras = props.carteiras;
+    var s = useState((editing && editing.tipo) || "saida"); var tipo=s[0], setTipo=s[1];
+    var defaultCat = (categorias.filter(function(c){return c.tipo==="saida";})[0]||{}).id;
+    var s2 = useState((editing && editing.categoria) || defaultCat); var categoria=s2[0], setCategoria=s2[1];
+    var s3 = useState((editing && editing.descricao) || ""); var descricao=s3[0], setDescricao=s3[1];
+    var s4 = useState((editing && editing.valor) || ""); var valor=s4[0], setValor=s4[1];
+    var s5 = useState((editing && editing.data) || todayKey()); var data=s5[0], setData=s5[1];
+    var s6 = useState((editing && editing.km) || ""); var km=s6[0], setKm=s6[1];
+    var s7 = useState((editing && editing.horas) || ""); var horas=s7[0], setHoras=s7[1];
+    var s8 = useState((editing && editing.hora) || ""); var hora=s8[0], setHora=s8[1];
+    var s9 = useState((editing && editing.carteira) || carteiras[0].id); var carteira=s9[0], setCarteira=s9[1];
+    var s10 = useState((editing && editing.recorrente) || false); var recorrente=s10[0], setRecorrente=s10[1];
+    var s11 = useState((editing && editing.comprovante) || ""); var comprovante=s11[0], setComprovante=s11[1];
+    var cats = categorias.filter(function(c){ return c.tipo===tipo; });
+
+    useEffect(function(){
+      var found=false;
+      for (var i=0;i<cats.length;i++) if (cats[i].id===categoria) { found=true; break; }
+      if (!found && cats.length>0) setCategoria(cats[0].id);
+    }, [tipo]);
+
+    function onFile(ev) {
+      var file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      if (file.size > 800000) { alert("Imagem muito grande (máx 800KB). Tire uma foto menor."); return; }
+      var reader = new FileReader();
+      reader.onload = function(e){ setComprovante(e.target.result); };
+      reader.readAsDataURL(file);
+    }
+
+    function submit(ev) {
+      ev.preventDefault();
+      if (!descricao.trim() || !valor || parseFloat(valor)<=0) return;
+      var t = {
+        id: (editing && editing.id) || uid(),
+        tipo: tipo, categoria: categoria, descricao: descricao.trim(),
+        valor: parseFloat(valor), data: data, hora: hora || null,
+        carteira: carteira,
+        km: categoria==="variavel" && km ? parseFloat(km) : null,
+        horas: categoria==="variavel" && horas ? parseFloat(horas) : null,
+        recorrente: !!recorrente,
+        comprovante: comprovante || null,
+        criadoEm: (editing && editing.criadoEm) || new Date().toISOString()
+      };
+      props.onSave(t); props.onClose();
+    }
+
+    function tipoBtn(id, label, iconName, activeC) {
+      return h("button",{
+        type:"button", onClick:function(){setTipo(id);},
+        className: "py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all "
+          +(tipo===id?activeC:"card text-zinc-400")
+      }, h(Icon,{name:iconName,size:18}), " "+label);
+    }
+
+    return h("div",{className:"fixed inset-0 modal-overlay z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"},
+      h("div",{className:"card rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto"},
+        h("div",{className:"sticky top-0 card flex items-center justify-between px-5 py-4 border-b border-[var(--border)] z-10"},
+          h("h3",{className:"text-lg font-bold gradient-text"}, editing?"Editar Transação":"Nova Transação"),
+          h("button",{onClick:props.onClose,className:"text-zinc-400 hover:text-white"}, h(Icon,{name:"x"}))),
+        h("form",{onSubmit:submit,className:"p-5 space-y-4"},
+          h("div",{className:"grid grid-cols-2 gap-2"},
+            tipoBtn("entrada","Entrada","trendingUp","bg-green-500/20 border border-green-500 text-green-400"),
+            tipoBtn("saida","Saída","trendingDown","bg-red-500/20 border border-red-500 text-red-400")),
+          h("div",null,
+            h("label",{className:"text-xs text-zinc-400 uppercase tracking-wide mb-1 block"},"Categoria"),
+            h("select",{value:categoria,onChange:function(e){setCategoria(e.target.value);},
+              className:"input w-full rounded-xl px-4 py-3"},
+              cats.map(function(c){ return h("option",{key:c.id,value:c.id},c.label); }))),
+          h("div",null,
+            h("label",{className:"text-xs text-zinc-400 uppercase tracking-wide mb-1 block"},"Carteira / Conta"),
+            h("select",{value:carteira,onChange:function(e){setCarteira(e.target.value);},
+              className:"input w-full rounded-xl px-4 py-3"},
+              carteiras.map(function(c){ return h("option",{key:c.id,value:c.id},c.label); }))),
+          h("div",null,
+            h("label",{className:"text-xs text-zinc-400 uppercase tracking-wide mb-1 block"},"Descrição"),
+            h("input",{type:"text",value:descricao,onChange:function(e){setDescricao(e.target.value);},
+              placeholder:"Ex: Abastecimento posto Shell",
+              className:"input w-full rounded-xl px-4 py-3",required:true})),
+          h("div",{className:"grid grid-cols-2 gap-3"},
+            h("div",null,
+              h("label",{className:"text-xs text-zinc-400 uppercase tracking-wide mb-1 block"},"Valor (R$)"),
+              h("input",{type:"number",step:"0.01",min:"0",value:valor,
+                onChange:function(e){setValor(e.target.value);},placeholder:"0,00",
+                className:"input w-full rounded-xl px-4 py-3",required:true})),
+            h("div",null,
+              h("label",{className:"text-xs text-zinc-400 uppercase tracking-wide mb-1 block"},"Data"),
+              h("input",{type:"date",value:data,onChange:function(e){setData(e.target.value);},
+                className:"input w-full rounded-xl px-4 py-3",required:true}))),
+          h("div",null,
+            h("label",{className:"text-xs text-zinc-400 uppercase tracking-wide mb-1 block"},"Hora (opcional — usado no heatmap)"),
+            h("input",{type:"time",value:hora,onChange:function(e){setHora(e.target.value);},
+              className:"input w-full rounded-xl px-4 py-3"})),
+          tipo==="entrada" && categoria==="variavel" &&
+            h("div",{className:"grid grid-cols-2 gap-3 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-xl"},
+              h("div",null,
+                h("label",{className:"text-xs text-yellow-400 uppercase tracking-wide mb-1 flex items-center gap-1"},
+                  h(Icon,{name:"route",size:12})," KM rodados"),
+                h("input",{type:"number",step:"0.1",min:"0",value:km,
+                  onChange:function(e){setKm(e.target.value);},placeholder:"0",
+                  className:"input w-full rounded-xl px-3 py-2"})),
+              h("div",null,
+                h("label",{className:"text-xs text-yellow-400 uppercase tracking-wide mb-1 flex items-center gap-1"},
+                  h(Icon,{name:"clock",size:12})," Horas"),
+                h("input",{type:"number",step:"0.1",min:"0",value:horas,
+                  onChange:function(e){setHoras(e.target.value);},placeholder:"0",
+                  className:"input w-full rounded-xl px-3 py-2"}))),
+          h("label",{className:"flex items-center gap-3 cursor-pointer p-3 card rounded-xl"},
+            h("input",{type:"checkbox",checked:recorrente,onChange:function(e){setRecorrente(e.target.checked);},
+              className:"w-4 h-4 accent-orange-500"}),
+            h(Icon,{name:"repeat",size:16,className:"text-orange-400"}),
+            h("span",{className:"text-sm flex-1"},"Transação recorrente (lança todo mês)")),
+          h("div",null,
+            h("label",{className:"text-xs text-zinc-400 uppercase tracking-wide mb-1 flex items-center gap-1"},
+              h(Icon,{name:"paperclip",size:12})," Comprovante (opcional)"),
+            comprovante
+              ? h("div",{className:"relative"},
+                  h("img",{src:comprovante,className:"w-full h-32 object-cover rounded-xl"}),
+                  h("button",{type:"button",onClick:function(){setComprovante("");},
+                    className:"absolute top-2 right-2 bg-black/70 rounded-full p-1.5"},h(Icon,{name:"x",size:14})))
+              : h("input",{type:"file",accept:"image/*",onChange:onFile,
+                  className:"input w-full rounded-xl px-3 py-2 text-sm file:bg-orange-500 file:text-black file:rounded-lg file:px-3 file:py-1 file:mr-3 file:border-0 file:font-semibold"})),
+          h("button",{type:"submit",className:"w-full gradient-bg text-black font-bold py-3 rounded-xl hover:opacity-90 transition"},
+            editing?"Salvar Alterações":"Adicionar Transação"))));
+  }
+  function Onboarding(props) {
+    var s = useState(0); var step = s[0], setStep = s[1];
+    var slides = [
+      { icon: "wallet", title: "Bem-vindo ao FinanceiroPro Elite",
+        text: "Sua gestão financeira profissional, com foco em motoristas de aplicativo e autônomos." },
+      { icon: "route", title: "Métricas de motorista",
+        text: "Registre KM, horas e ganhos. Veja R$/km, R$/hora, lucro líquido e o melhor horário para rodar." },
+      { icon: "target", title: "Metas, gráficos e relatórios",
+        text: "Acompanhe metas diárias, exporte relatórios em CSV e tenha controle total na palma da mão." }
+    ];
+    var slide = slides[step];
+    return h("div",{className:"fixed inset-0 modal-overlay z-[80] flex items-center justify-center p-4"},
+      h("div",{className:"card rounded-3xl w-full max-w-md p-8 text-center"},
+        h("div",{className:"w-20 h-20 rounded-full gradient-bg mx-auto flex items-center justify-center text-black mb-5"},
+          h(Icon,{name:slide.icon,size:36})),
+        h("h2",{className:"text-2xl font-extrabold gradient-text mb-3"}, slide.title),
+        h("p",{className:"text-zinc-400 mb-6"}, slide.text),
+        h("div",{className:"flex justify-center gap-2 mb-6"},
+          slides.map(function(_,i){ return h("div",{key:i,
+            className:"h-1.5 rounded-full transition-all",
+            style:{ width: i===step?24:8, background: i===step?"#FF6B00":"#3a3a3a" }}); })),
+        h("div",{className:"flex gap-3"},
+          step>0 && h("button",{onClick:function(){setStep(step-1);},
+            className:"flex-1 card py-3 rounded-xl font-semibold"}, "Voltar"),
+          h("button",{onClick:function(){
+            if (step<slides.length-1) setStep(step+1); else props.onDone();
+          }, className:"flex-1 gradient-bg text-black py-3 rounded-xl font-bold"},
+            step<slides.length-1?"Próximo":"Começar"))));
+  }
+  function CategoriasManager(props) {
+    var s = useState(false); var adding = s[0], setAdding = s[1];
+    var s1 = useState(""); var label=s1[0], setLabel=s1[1];
+    var s2 = useState("saida"); var tipo=s2[0], setTipo=s2[1];
+    var s3 = useState(ICON_OPTIONS[0]); var icon=s3[0], setIcon=s3[1];
+    var s4 = useState(COLOR_OPTIONS[0]); var color=s4[0], setColor=s4[1];
+
+    function add() {
+      if (!label.trim()) return;
+      props.onAdd({ id: uid(), label: label.trim(), tipo: tipo, icon: icon, color: color, builtin: false });
+      setLabel(""); setAdding(false);
+    }
+
+    return h("div",{className:"fixed inset-0 modal-overlay z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"},
+      h("div",{className:"card rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto"},
+        h("div",{className:"sticky top-0 card flex items-center justify-between px-5 py-4 border-b border-[var(--border)]"},
+          h("h3",{className:"text-lg font-bold gradient-text"},"Categorias"),
+          h("button",{onClick:props.onClose,className:"text-zinc-400 hover:text-white"},h(Icon,{name:"x"}))),
+        h("div",{className:"p-5 space-y-3"},
+          props.categorias.map(function(c){
+            return h("div",{key:c.id,className:"flex items-center gap-3 p-3 card-h card rounded-xl"},
+              h("div",{className:"w-9 h-9 rounded-lg flex items-center justify-center",
+                style:{background:c.color+"22",color:c.color}}, h(Icon,{name:c.icon,size:16})),
+              h("div",{className:"flex-1 min-w-0"},
+                h("p",{className:"font-semibold truncate"},c.label),
+                h("p",{className:"text-xs text-zinc-500"}, c.tipo==="entrada"?"Entrada":"Saída")),
+              !c.builtin && h("button",{onClick:function(){props.onRemove(c.id);},
+                className:"text-zinc-500 hover:text-red-500"},h(Icon,{name:"trash",size:14})));
+          }),
+          adding ?
+            h("div",{className:"card rounded-xl p-4 space-y-3 border-orange-500/40"},
+              h("input",{type:"text",placeholder:"Nome da categoria",value:label,
+                onChange:function(e){setLabel(e.target.value);},
+                className:"input w-full rounded-lg px-3 py-2"}),
+              h("div",{className:"grid grid-cols-2 gap-2"},
+                h("button",{onClick:function(){setTipo("entrada");},type:"button",
+                  className:"py-2 rounded-lg text-sm "+(tipo==="entrada"?"bg-green-500/20 text-green-400 border border-green-500":"card")},"Entrada"),
+                h("button",{onClick:function(){setTipo("saida");},type:"button",
+                  className:"py-2 rounded-lg text-sm "+(tipo==="saida"?"bg-red-500/20 text-red-400 border border-red-500":"card")},"Saída")),
+              h("div",null,
+                h("p",{className:"text-xs text-zinc-400 mb-1"},"Ícone"),
+                h("div",{className:"flex flex-wrap gap-1"},
+                  ICON_OPTIONS.map(function(ic){
+                    return h("button",{key:ic,type:"button",onClick:function(){setIcon(ic);},
+                      className:"w-8 h-8 rounded-lg flex items-center justify-center "+(icon===ic?"bg-orange-500 text-black":"card text-zinc-400")},
+                      h(Icon,{name:ic,size:14}));
+                  }))),
+              h("div",null,
+                h("p",{className:"text-xs text-zinc-400 mb-1"},"Cor"),
+                h("div",{className:"flex flex-wrap gap-1"},
+                  COLOR_OPTIONS.map(function(co){
+                    return h("button",{key:co,type:"button",onClick:function(){setColor(co);},
+                      className:"w-8 h-8 rounded-lg "+(color===co?"ring-2 ring-white":""),
+                      style:{background:co}});
+                  }))),
+              h("div",{className:"flex gap-2"},
+                h("button",{onClick:function(){setAdding(false);},type:"button",className:"flex-1 card py-2 rounded-lg"},"Cancelar"),
+                h("button",{onClick:add,type:"button",className:"flex-1 gradient-bg text-black py-2 rounded-lg font-bold"},"Adicionar"))) :
+            h("button",{onClick:function(){setAdding(true);},
+              className:"w-full card py-3 rounded-xl border-dashed border-2 border-[var(--border-strong)] text-orange-400 font-semibold flex items-center justify-center gap-2"},
+              h(Icon,{name:"plus",size:16})," Nova Categoria"))));
+  }
+  function Settings(props) {
+    var fileRef = useRef(null);
+    function exportJSON() {
+      var dump = {
+        transacoes: props.transacoes, categorias: props.categorias,
+        carteiras: props.carteiras, meta: props.meta, exportadoEm: new Date().toISOString()
+      };
+      var blob = new Blob([JSON.stringify(dump,null,2)],{type:"application/json"});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a"); a.href=url; a.download="financeiropro_"+todayKey()+".json"; a.click();
+      URL.revokeObjectURL(url);
+      props.toast("Backup JSON exportado");
+    }
+    function exportCSV() {
+      var rows = [["Data","Hora","Tipo","Categoria","Carteira","Descrição","Valor","KM","Horas"]];
+      props.transacoes.forEach(function(t){
+        var c=props.categorias.filter(function(x){return x.id===t.categoria;})[0];
+        var w=props.carteiras.filter(function(x){return x.id===t.carteira;})[0];
+        rows.push([t.data,t.hora||"",t.tipo, c?c.label:"", w?w.label:"", '"'+(t.descricao||"").replace(/"/g,'""')+'"', String(t.valor).replace(".",","), t.km||"", t.horas||""]);
+      });
+      var csv = "﻿" + rows.map(function(r){return r.join(";");}).join("\n");
+      var blob = new Blob([csv],{type:"text/csv;charset=utf-8"});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a"); a.href=url; a.download="financeiropro_"+todayKey()+".csv"; a.click();
+      URL.revokeObjectURL(url);
+      props.toast("CSV exportado");
+    }
+    function importJSON(ev) {
+      var file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e){
+        try {
+          var d = JSON.parse(e.target.result);
+          if (!confirm("Substituir todos os dados atuais pelos do arquivo?")) return;
+          if (d.transacoes) props.setTransacoes(d.transacoes);
+          if (d.categorias) props.setCategorias(d.categorias);
+          if (d.carteiras) props.setCarteiras(d.carteiras);
+          if (d.meta) props.setMeta(d.meta);
+          props.toast("Dados importados com sucesso");
+          props.onClose();
+        } catch(err) { alert("Arquivo inválido"); }
+      };
+      reader.readAsText(file);
+    }
+    function clearAll() {
+      if (!confirm("APAGAR todas as transações? Isso não pode ser desfeito.")) return;
+      props.setTransacoes([]);
+      props.toast("Transações apagadas","info");
+    }
+    return h("div",{className:"fixed inset-0 modal-overlay z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"},
+      h("div",{className:"card rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto"},
+        h("div",{className:"sticky top-0 card flex items-center justify-between px-5 py-4 border-b border-[var(--border)]"},
+          h("h3",{className:"text-lg font-bold gradient-text"},"Configurações"),
+          h("button",{onClick:props.onClose,className:"text-zinc-400 hover:text-white"},h(Icon,{name:"x"}))),
+        h("div",{className:"p-5 space-y-5"},
+          h("div",null,
+            h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Aparência"),
+            h("div",{className:"grid grid-cols-2 gap-2"},
+              h("button",{onClick:function(){props.setTheme("dark");},
+                className:"p-3 rounded-xl flex items-center justify-center gap-2 "+(props.theme==="dark"?"bg-orange-500/20 border border-orange-500 text-orange-400":"card")},
+                h(Icon,{name:"moon",size:16})," Escuro"),
+              h("button",{onClick:function(){props.setTheme("light");},
+                className:"p-3 rounded-xl flex items-center justify-center gap-2 "+(props.theme==="light"?"bg-orange-500/20 border border-orange-500 text-orange-400":"card")},
+                h(Icon,{name:"sun",size:16})," Claro"))),
+          h("div",null,
+            h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Meta"),
+            h("div",{className:"card rounded-xl p-3 space-y-2"},
+              h("label",{className:"text-xs text-zinc-400"},"Meta diária (R$)"),
+              h("input",{type:"number",step:"1",min:"0",value:props.meta.diaria,
+                onChange:function(e){props.setMeta(Object.assign({},props.meta,{diaria:parseFloat(e.target.value)||0}));},
+                className:"input w-full rounded-lg px-3 py-2"}),
+              h("label",{className:"text-xs text-zinc-400"},"Meta semanal (R$)"),
+              h("input",{type:"number",step:"1",min:"0",value:props.meta.semanal,
+                onChange:function(e){props.setMeta(Object.assign({},props.meta,{semanal:parseFloat(e.target.value)||0}));},
+                className:"input w-full rounded-lg px-3 py-2"}))),
+          h("div",null,
+            h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Backup"),
+            h("div",{className:"grid grid-cols-2 gap-2"},
+              h("button",{onClick:exportJSON,className:"card py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold"},
+                h(Icon,{name:"download",size:14})," JSON"),
+              h("button",{onClick:exportCSV,className:"card py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold"},
+                h(Icon,{name:"fileText",size:14})," CSV")),
+            h("button",{onClick:function(){fileRef.current.click();},
+              className:"w-full mt-2 card py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold"},
+              h(Icon,{name:"upload",size:14})," Importar JSON"),
+            h("input",{type:"file",accept:".json",ref:fileRef,onChange:importJSON,style:{display:"none"}})),
+          h("div",null,
+            h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Atalhos de teclado"),
+            h("div",{className:"card rounded-xl p-3 text-xs text-zinc-400 space-y-1"},
+              h("div",null,h("kbd",{className:"px-1.5 py-0.5 bg-zinc-700 rounded mr-2"},"N")," Nova transação"),
+              h("div",null,h("kbd",{className:"px-1.5 py-0.5 bg-zinc-700 rounded mr-2"},"F")," Abrir filtros"),
+              h("div",null,h("kbd",{className:"px-1.5 py-0.5 bg-zinc-700 rounded mr-2"},"/")," Buscar"),
+              h("div",null,h("kbd",{className:"px-1.5 py-0.5 bg-zinc-700 rounded mr-2"},"Esc")," Fechar modal"))),
+          h("button",{onClick:clearAll,
+            className:"w-full bg-red-500/10 border border-red-500/30 text-red-400 py-3 rounded-xl font-semibold"},
+            "Apagar todas as transações"))));
+  }
+  function App() {
+    var s1 = useState(function(){ return load("fp_transacoes",[]); });
+    var transacoes=s1[0], setTransacoes=s1[1];
+    var s2 = useState(false); var showForm=s2[0], setShowForm=s2[1];
+    var s3 = useState(null); var editing=s3[0], setEditing=s3[1];
+    var s4 = useState("mes"); var filtroPeriodo=s4[0], setFiltroPeriodo=s4[1];
+    var s5 = useState("todas"); var filtroCategoria=s5[0], setFiltroCategoria=s5[1];
+    var s6 = useState(false); var showFiltros=s6[0], setShowFiltros=s6[1];
+    var s7 = useState(""); var busca=s7[0], setBusca=s7[1];
+    var s8 = useState(function(){ return load("fp_categorias", DEFAULT_CATEGORIAS); });
+    var categorias=s8[0], setCategorias=s8[1];
+    var s9 = useState(function(){ return load("fp_carteiras", DEFAULT_CARTEIRAS); });
+    var carteiras=s9[0], setCarteiras=s9[1];
+    var s10 = useState(function(){ return load("fp_meta", { diaria: 250, semanal: 1500 }); });
+    var meta=s10[0], setMeta=s10[1];
+    var s11 = useState(function(){ return load("fp_theme","dark"); });
+    var theme=s11[0], setTheme=s11[1];
+    var s12 = useState(false); var showCats=s12[0], setShowCats=s12[1];
+    var s13 = useState(false); var showSettings=s13[0], setShowSettings=s13[1];
+    var s14 = useState(function(){ return !load("fp_onboarded", false); });
+    var showOnboarding=s14[0], setShowOnboarding=s14[1];
+    var s15 = useState("dashboard"); var tab=s15[0], setTab=s15[1];
+
+    var toastMgr = useToasts();
+    useEffect(function(){
+      if (theme==="light") document.body.classList.add("light");
+      else document.body.classList.remove("light");
+      save("fp_theme", theme);
+    }, [theme]);
+    useEffect(function(){ save("fp_transacoes", transacoes); }, [transacoes]);
+    useEffect(function(){ save("fp_categorias", categorias); }, [categorias]);
+    useEffect(function(){ save("fp_carteiras", carteiras); }, [carteiras]);
+    useEffect(function(){ save("fp_meta", meta); }, [meta]);
+    useEffect(function(){
+      var thisMonth = monthKey(new Date());
+      var recs = transacoes.filter(function(t){ return t.recorrente && monthKey(new Date(t.data+"T00:00:00")) !== thisMonth; });
+      var generated = [];
+      recs.forEach(function(r){
+        var exists = transacoes.some(function(t){ return t.origemRecorrente===r.id && monthKey(new Date(t.data+"T00:00:00"))===thisMonth; });
+        if (!exists) {
+          var dt = new Date(r.data+"T00:00:00");
+          var newDate = new Date(); newDate.setDate(Math.min(dt.getDate(), 28));
+          generated.push(Object.assign({}, r, {
+            id: uid(), data: newDate.toISOString().split("T")[0],
+            recorrente: false, origemRecorrente: r.id,
+            criadoEm: new Date().toISOString()
+          }));
+        }
+      });
+      if (generated.length>0) {
+        setTransacoes(function(prev){ return generated.concat(prev); });
+        toastMgr.push(generated.length+" recorrência(s) lançada(s) este mês","info");
+      }
+    }, []);
+    useEffect(function(){
+      function onKey(e){
+        if (e.target && (e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"||e.target.tagName==="SELECT")) return;
+        if (e.key==="n"||e.key==="N") { e.preventDefault(); setEditing(null); setShowForm(true); }
+        if (e.key==="f"||e.key==="F") { e.preventDefault(); setShowFiltros(function(v){return !v;}); }
+        if (e.key==="/") { e.preventDefault(); var el=document.getElementById("search-input"); if (el) el.focus(); }
+        if (e.key==="Escape") { setShowForm(false); setShowCats(false); setShowSettings(false); }
+      }
+      window.addEventListener("keydown", onKey);
+      return function(){ window.removeEventListener("keydown", onKey); };
+    }, []);
+
+    function getCat(id){
+      for (var i=0;i<categorias.length;i++) if (categorias[i].id===id) return categorias[i];
+      return { label:"—", icon:"wallet", color:"#888" };
+    }
+    function getWallet(id){
+      for (var i=0;i<carteiras.length;i++) if (carteiras[i].id===id) return carteiras[i];
+      return { label:"—", icon:"wallet", color:"#888" };
+    }
+
+    function salvar(t) {
+      var existed = transacoes.some(function(x){ return x.id===t.id; });
+      setTransacoes(function(prev){
+        var i=-1;
+        for (var k=0;k<prev.length;k++) if (prev[k].id===t.id) { i=k; break; }
+        if (i>=0) { var n=prev.slice(); n[i]=t; return n; }
+        return [t].concat(prev);
+      });
+      setEditing(null);
+      toastMgr.push(existed?"Transação atualizada":"Transação adicionada");
+    }
+    function remover(id) {
+      if (confirm("Remover esta transação?")) {
+        setTransacoes(function(prev){ return prev.filter(function(x){return x.id!==id;}); });
+        toastMgr.push("Transação removida","info");
+      }
+    }
+    function addCategoria(c){ setCategorias(function(p){return p.concat([c]);}); toastMgr.push("Categoria criada"); }
+    function removeCategoria(id){
+      var inUse = transacoes.some(function(t){return t.categoria===id;});
+      if (inUse) { alert("Categoria em uso por transações existentes."); return; }
+      setCategorias(function(p){return p.filter(function(c){return c.id!==id;});});
+      toastMgr.push("Categoria removida","info");
+    }
+
+    var transacoesFiltradas = useMemo(function(){
+      var agora = new Date();
+      var iniSemana = new Date(agora); iniSemana.setDate(agora.getDate()-7);
+      var bs = busca.trim().toLowerCase();
+      return transacoes.filter(function(t){
+        var dt = new Date(t.data+"T00:00:00");
+        if (filtroPeriodo==="dia" && dt.toDateString()!==agora.toDateString()) return false;
+        if (filtroPeriodo==="semana" && dt<iniSemana) return false;
+        if (filtroPeriodo==="mes" && (dt.getMonth()!==agora.getMonth()||dt.getFullYear()!==agora.getFullYear())) return false;
+        if (filtroCategoria!=="todas" && t.categoria!==filtroCategoria) return false;
+        if (bs && (t.descricao||"").toLowerCase().indexOf(bs)===-1) return false;
+        return true;
+      }).sort(function(a,b){ return new Date(b.data)-new Date(a.data); });
+    }, [transacoes, filtroPeriodo, filtroCategoria, busca]);
+
+    var resumo = useMemo(function(){
+      var agora = new Date(), ent=0, sai=0, hojeEnt=0;
+      transacoes.forEach(function(t){
+        var dt = new Date(t.data+"T00:00:00");
+        if (dt.getMonth()===agora.getMonth() && dt.getFullYear()===agora.getFullYear()) {
+          if (t.tipo==="entrada") ent+=t.valor; else sai+=t.valor;
+        }
+        if (t.tipo==="entrada" && t.data===todayKey()) hojeEnt+=t.valor;
+      });
+      var saldoTotal = transacoes.reduce(function(a,t){return a+(t.tipo==="entrada"?t.valor:-t.valor);},0);
+      return { entradas:ent, saidas:sai, saldoTotal:saldoTotal, hojeEntradas:hojeEnt };
+    }, [transacoes]);
+
+    var saldoCarteiras = useMemo(function(){
+      var map = {};
+      carteiras.forEach(function(w){ map[w.id]=0; });
+      transacoes.forEach(function(t){
+        if (map[t.carteira]==null) map[t.carteira]=0;
+        map[t.carteira] += t.tipo==="entrada"?t.valor:-t.valor;
+      });
+      return map;
+    }, [transacoes, carteiras]);
+
+    var dadosLinha = useMemo(function(){
+      var dias=[], agora=new Date();
+      for (var i=29;i>=0;i--){
+        var d=new Date(agora); d.setDate(agora.getDate()-i);
+        var k=d.toISOString().split("T")[0];
+        dias.push({ key:k, label:d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})});
+      }
+      var acc = transacoes.filter(function(t){return t.data<dias[0].key;})
+        .reduce(function(a,t){return a+(t.tipo==="entrada"?t.valor:-t.valor);},0);
+      return dias.map(function(d){
+        transacoes.filter(function(t){return t.data===d.key;}).forEach(function(t){
+          acc += t.tipo==="entrada"?t.valor:-t.valor;
+        });
+        return { dia:d.label, saldo:parseFloat(acc.toFixed(2)) };
+      });
+    }, [transacoes]);
+
+    var dadosPizza = useMemo(function(){
+      var map = {};
+      transacoesFiltradas.filter(function(t){return t.tipo==="saida";}).forEach(function(t){
+        map[t.categoria]=(map[t.categoria]||0)+t.valor;
+      });
+      return Object.keys(map).map(function(k){
+        var c = getCat(k);
+        return { name:c.label, value:parseFloat(map[k].toFixed(2)), color:c.color };
+      }).sort(function(a,b){return b.value-a.value;});
+    }, [transacoesFiltradas]);
+
+    var dadosBarMeses = useMemo(function(){
+      var meses = [];
+      var agora = new Date();
+      for (var i=5;i>=0;i--){
+        var d = new Date(agora.getFullYear(), agora.getMonth()-i, 1);
+        var k = monthKey(d);
+        var label = d.toLocaleDateString("pt-BR",{month:"short"});
+        meses.push({ key:k, label:label, entrada:0, saida:0 });
+      }
+      transacoes.forEach(function(t){
+        var k = monthKey(new Date(t.data+"T00:00:00"));
+        var m = meses.filter(function(x){return x.key===k;})[0];
+        if (m) { if (t.tipo==="entrada") m.entrada+=t.valor; else m.saida+=t.valor; }
+      });
+      return meses;
+    }, [transacoes]);
+
+    var motorista = useMemo(function(){
+      var v = transacoesFiltradas.filter(function(t){return t.categoria==="variavel";});
+      var km = v.reduce(function(a,t){return a+(t.km||0);},0);
+      var hh = v.reduce(function(a,t){return a+(t.horas||0);},0);
+      var g = v.reduce(function(a,t){return a+t.valor;},0);
+      var custoComb = transacoesFiltradas.filter(function(t){return t.tipo==="saida" && (t.categoria==="combustivel"||t.categoria==="manutencao");})
+        .reduce(function(a,t){return a+t.valor;},0);
+      var custoPorKm = km>0 ? custoComb/km : 0;
+      var liquido = g - custoComb;
+      return { km:km, h:hh, g:g, porKm: km>0?g/km:0, porHora: hh>0?g/hh:0,
+        custoPorKm:custoPorKm, liquido:liquido, liquidoPorKm: km>0?liquido/km:0 };
+    }, [transacoesFiltradas]);
+
+    var heatmapMatrix = useMemo(function(){
+      var m = []; for (var i=0;i<7;i++){ var row=[]; for (var j=0;j<24;j++) row.push(0); m.push(row); }
+      transacoes.filter(function(t){return t.categoria==="variavel" && t.hora;}).forEach(function(t){
+        var dt = new Date(t.data+"T00:00:00");
+        var dow = dt.getDay();
+        var hr = parseInt(t.hora.split(":")[0],10);
+        if (!isNaN(hr)) m[dow][hr] += t.valor;
+      });
+      return m;
+    }, [transacoes]);
+
+    var topDespesas = useMemo(function(){
+      return transacoesFiltradas.filter(function(t){return t.tipo==="saida";})
+        .slice().sort(function(a,b){return b.valor-a.valor;}).slice(0,5);
+    }, [transacoesFiltradas]);
+    var saude = useMemo(function(){
+      var ent = resumo.entradas || 1;
+      var fixos = transacoes.filter(function(t){
+        var dt = new Date(t.data+"T00:00:00"), agora=new Date();
+        return t.tipo==="saida" && t.categoria==="contas"
+          && dt.getMonth()===agora.getMonth() && dt.getFullYear()===agora.getFullYear();
+      }).reduce(function(a,t){return a+t.valor;},0);
+      var poupanca = resumo.entradas - resumo.saidas;
+      var pctFixos = (fixos/ent)*100;
+      var pctPoupado = (poupanca/ent)*100;
+      var score = 0;
+      if (pctPoupado>=20) score+=40; else if (pctPoupado>=10) score+=25; else if (pctPoupado>=0) score+=15;
+      if (pctFixos<=30) score+=30; else if (pctFixos<=50) score+=20; else if (pctFixos<=70) score+=10;
+      if (resumo.saldoTotal>0) score+=30; else if (resumo.saldoTotal>=0) score+=15;
+      return { score:score, pctFixos:pctFixos, pctPoupado:pctPoupado, fixos:fixos };
+    }, [transacoes, resumo]);
+    var projecao = useMemo(function(){
+      var agora = new Date();
+      var diaAtual = agora.getDate();
+      var diasMes = new Date(agora.getFullYear(), agora.getMonth()+1, 0).getDate();
+      var ritmoEnt = (resumo.entradas/diaAtual) * diasMes;
+      var ritmoSai = (resumo.saidas/diaAtual) * diasMes;
+      return { entrada: ritmoEnt, saida: ritmoSai, liquido: ritmoEnt-ritmoSai, diasRestantes: diasMes-diaAtual };
+    }, [resumo]);
+    var metaProgresso = useMemo(function(){
+      var agora = new Date();
+      var iniSemana = new Date(agora); iniSemana.setDate(agora.getDate()-6);
+      var hoje = transacoes.filter(function(t){return t.tipo==="entrada" && t.data===todayKey();})
+        .reduce(function(a,t){return a+t.valor;},0);
+      var semana = transacoes.filter(function(t){
+        if (t.tipo!=="entrada") return false;
+        var dt=new Date(t.data+"T00:00:00");
+        return dt>=iniSemana && dt<=agora;
+      }).reduce(function(a,t){return a+t.valor;},0);
+      return { hoje:hoje, semana:semana,
+        pctDiaria: meta.diaria>0?(hoje/meta.diaria)*100:0,
+        pctSemanal: meta.semanal>0?(semana/meta.semanal)*100:0 };
+    }, [transacoes, meta]);
+    return h("div",{className:"min-h-screen pb-32 safe-bottom"},
+      h("header",{className:"sticky top-0 z-30 backdrop-blur-lg bg-[var(--bg)]/85 border-b border-[var(--border)]"},
+        h("div",{className:"max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3"},
+          h("div",{className:"flex items-center gap-2 min-w-0"},
+            h("div",{className:"w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-black shrink-0"},
+              h(Icon,{name:"wallet",size:22})),
+            h("div",{className:"min-w-0"},
+              h("h1",{className:"text-lg sm:text-2xl font-extrabold gradient-text leading-none tracking-tight truncate",
+                style:{letterSpacing:"-0.02em"}}, "FinanceiroPro Elite"),
+              h("p",{className:"text-[10px] text-zinc-500 uppercase tracking-widest"}, "Gestão profissional"))),
+          h("div",{className:"flex items-center gap-1.5"},
+            h("button",{onClick:function(){setTheme(theme==="dark"?"light":"dark");},
+              className:"card p-2 rounded-lg text-zinc-400 hover:text-orange-400",title:"Tema"},
+              h(Icon,{name:theme==="dark"?"sun":"moon",size:16})),
+            h("button",{onClick:function(){setShowSettings(true);},
+              className:"card p-2 rounded-lg text-zinc-400 hover:text-orange-400",title:"Configurações"},
+              h(Icon,{name:"settings",size:16})),
+            h("a",{href:"https://mpago.la/2z5Uj6E",target:"_blank",rel:"noopener noreferrer",
+              className:"hidden sm:flex items-center gap-2 bg-orange-500/10 border border-orange-500/40 hover:border-orange-500 text-orange-400 px-3 py-2 rounded-lg text-xs font-bold transition"},
+              h(Icon,{name:"heart",size:14})," Apoiar"))),
+        h("nav",{className:"max-w-6xl mx-auto px-2 flex gap-1 overflow-x-auto"},
+          [
+            { id:"dashboard", label:"Dashboard", icon:"chart" },
+            { id:"transacoes", label:"Transações", icon:"list" },
+            { id:"motorista", label:"Motorista", icon:"car" },
+            { id:"analise", label:"Análise", icon:"activity" }
+          ].map(function(t){
+            return h("button",{key:t.id,onClick:function(){setTab(t.id);},
+              className:"tab-btn relative flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold whitespace-nowrap "+(tab===t.id?"active":"")},
+              h(Icon,{name:t.icon,size:14}), t.label,
+              tab===t.id && h("span",{className:"tab-indicator absolute bottom-0 left-2 right-2 h-0.5 rounded-full"}));
+          }))),
+
+      h("main",{className:"max-w-6xl mx-auto px-3 sm:px-4 py-5 space-y-5"},
+        tab==="dashboard" && h(Fragment, null,
+          h("section",{className:"grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"},
+            h("div",{className:"card card-h rounded-2xl p-4 sm:p-5"},
+              h("div",{className:"flex items-center justify-between mb-1.5"},
+                h("span",{className:"text-[10px] uppercase tracking-wider text-zinc-500 font-semibold"},"Saldo Total"),
+                h(Icon,{name:"wallet",size:18,className:"text-yellow-400"})),
+              h("p",{className:"text-2xl sm:text-3xl font-extrabold "+(resumo.saldoTotal>=0?"gradient-text":"text-red-500")},
+                formatMoney(resumo.saldoTotal)),
+              h("p",{className:"text-[11px] text-zinc-500 mt-1"},"Acumulado geral")),
+            h("div",{className:"card card-h rounded-2xl p-4 sm:p-5 border-l-4 border-l-green-500"},
+              h("div",{className:"flex items-center justify-between mb-1.5"},
+                h("span",{className:"text-[10px] uppercase tracking-wider text-zinc-500 font-semibold"},"Entradas (Mês)"),
+                h(Icon,{name:"trendingUp",size:18,className:"text-green-500"})),
+              h("p",{className:"text-2xl sm:text-3xl font-extrabold text-green-500"}, formatMoney(resumo.entradas)),
+              h("p",{className:"text-[11px] text-zinc-500 mt-1"},"Receitas do mês atual")),
+            h("div",{className:"card card-h rounded-2xl p-4 sm:p-5 border-l-4 border-l-orange-500"},
+              h("div",{className:"flex items-center justify-between mb-1.5"},
+                h("span",{className:"text-[10px] uppercase tracking-wider text-zinc-500 font-semibold"},"Saídas (Mês)"),
+                h(Icon,{name:"trendingDown",size:18,className:"text-orange-500"})),
+              h("p",{className:"text-2xl sm:text-3xl font-extrabold text-orange-500"}, formatMoney(resumo.saidas)),
+              h("p",{className:"text-[11px] text-zinc-500 mt-1"},"Despesas do mês atual"))),
+          h("section",{className:"grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"},
+            [
+              { label: "Meta Diária", icon: "target", val: metaProgresso.hoje, total: meta.diaria, pct: metaProgresso.pctDiaria },
+              { label: "Meta Semanal", icon: "flame", val: metaProgresso.semana, total: meta.semanal, pct: metaProgresso.pctSemanal }
+            ].map(function(m,i){
+              var pct = Math.min(100, m.pct);
+              return h("div",{key:i,className:"card rounded-2xl p-4"},
+                h("div",{className:"flex items-center justify-between mb-2"},
+                  h("div",{className:"flex items-center gap-2"},
+                    h(Icon,{name:m.icon,size:16,className:"text-yellow-400"}),
+                    h("span",{className:"text-xs uppercase tracking-wider font-semibold text-zinc-300"},m.label)),
+                  h("span",{className:"text-xs font-bold gradient-text"}, m.pct.toFixed(0)+"%")),
+                h("div",{className:"flex items-baseline gap-2 mb-2"},
+                  h("p",{className:"text-xl font-extrabold"}, formatMoney(m.val)),
+                  h("p",{className:"text-xs text-zinc-500"}, "/ "+formatMoney(m.total))),
+                h("div",{className:"h-2 bg-[var(--bg-hover)] rounded-full overflow-hidden"},
+                  h("div",{className:"h-full gradient-bg transition-all",style:{width:pct+"%"}})));
+            })),
+          h("section",{className:"grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4"},
+            h("div",{className:"card rounded-2xl p-4 sm:p-5"},
+              h("div",{className:"flex items-center gap-2 mb-3"},
+                h(Icon,{name:"chart",size:18,className:"text-yellow-400"}),
+                h("h2",{className:"text-sm font-bold uppercase tracking-wider"},"Evolução do Saldo (30d)")),
+              h(LineChart,{data:dadosLinha})),
+            h("div",{className:"card rounded-2xl p-4 sm:p-5"},
+              h("div",{className:"flex items-center gap-2 mb-3"},
+                h(Icon,{name:"pieIcon",size:18,className:"text-orange-500"}),
+                h("h2",{className:"text-sm font-bold uppercase tracking-wider"},"Distribuição de Despesas")),
+              h(PieChart,{data:dadosPizza}))),
+          h("section",{className:"card rounded-2xl p-4 sm:p-5"},
+            h("div",{className:"flex items-center gap-2 mb-3"},
+              h(Icon,{name:"creditCard",size:18,className:"text-yellow-400"}),
+              h("h2",{className:"text-sm font-bold uppercase tracking-wider"},"Saldo por Carteira")),
+            h("div",{className:"grid grid-cols-1 sm:grid-cols-3 gap-2"},
+              carteiras.map(function(w){
+                var v = saldoCarteiras[w.id]||0;
+                return h("div",{key:w.id,className:"flex items-center gap-3 p-3 rounded-xl",
+                  style:{background:w.color+"15",border:"1px solid "+w.color+"30"}},
+                  h("div",{className:"w-9 h-9 rounded-lg flex items-center justify-center",
+                    style:{background:w.color+"22",color:w.color}}, h(Icon,{name:w.icon,size:16})),
+                  h("div",{className:"flex-1 min-w-0"},
+                    h("p",{className:"text-xs text-zinc-400"},w.label),
+                    h("p",{className:"font-bold "+(v>=0?"text-white":"text-red-400")}, formatMoney(v))));
+              })))
+        ),
+        tab==="motorista" && h(Fragment, null,
+          h("section",{className:"grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3"},
+            [
+              { l:"Total KM", v: motorista.km.toFixed(1)+" km", c:"text-white" },
+              { l:"Total Horas", v: motorista.h.toFixed(1)+" h", c:"text-white" },
+              { l:"R$ por KM (bruto)", v: formatMoney(motorista.porKm), c:"gradient-text" },
+              { l:"R$ por Hora", v: formatMoney(motorista.porHora), c:"gradient-text" }
+            ].map(function(it,i){
+              return h("div",{key:i,className:"card rounded-xl p-3"},
+                h("p",{className:"text-[10px] uppercase text-zinc-500 font-semibold"}, it.l),
+                h("p",{className:"text-base sm:text-lg font-extrabold "+it.c}, it.v));
+            })),
+          h("section",{className:"card rounded-2xl p-5 border-yellow-500/20"},
+            h("div",{className:"flex items-center gap-2 mb-3"},
+              h(Icon,{name:"flame",size:18,className:"text-orange-500"}),
+              h("h2",{className:"text-sm font-bold uppercase tracking-wider text-orange-400"},"Lucro Líquido (período filtrado)")),
+            h("div",{className:"grid grid-cols-2 sm:grid-cols-4 gap-3"},
+              h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3"},
+                h("p",{className:"text-[10px] uppercase text-zinc-500"},"Ganho Bruto"),
+                h("p",{className:"text-lg font-bold text-green-400"}, formatMoney(motorista.g))),
+              h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3"},
+                h("p",{className:"text-[10px] uppercase text-zinc-500"},"Custo (Comb+Manut)"),
+                h("p",{className:"text-lg font-bold text-red-400"}, formatMoney(motorista.g-motorista.liquido))),
+              h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3"},
+                h("p",{className:"text-[10px] uppercase text-zinc-500"},"Lucro Líquido"),
+                h("p",{className:"text-lg font-bold gradient-text"}, formatMoney(motorista.liquido))),
+              h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3"},
+                h("p",{className:"text-[10px] uppercase text-zinc-500"},"Custo por KM"),
+                h("p",{className:"text-lg font-bold text-orange-400"}, formatMoney(motorista.custoPorKm))))),
+          h("section",{className:"card rounded-2xl p-5"},
+            h("div",{className:"flex items-center gap-2 mb-3"},
+              h(Icon,{name:"clock",size:18,className:"text-yellow-400"}),
+              h("h2",{className:"text-sm font-bold uppercase tracking-wider"},"Hora mais lucrativa (heatmap dia × hora)"),
+              h("span",{className:"text-[10px] text-zinc-500 ml-auto"},"Cor mais intensa = mais ganho")),
+            h(Heatmap,{matrix:heatmapMatrix})),
+          h("section",{className:"card rounded-2xl p-5"},
+            h("div",{className:"flex items-center gap-2 mb-3"},
+              h(Icon,{name:"target",size:18,className:"text-yellow-400"}),
+              h("h2",{className:"text-sm font-bold uppercase tracking-wider"},"Progresso de metas")),
+            h("div",{className:"space-y-3"},
+              [
+                { l:"Hoje", v:metaProgresso.hoje, t:meta.diaria, p:metaProgresso.pctDiaria },
+                { l:"Esta semana", v:metaProgresso.semana, t:meta.semanal, p:metaProgresso.pctSemanal }
+              ].map(function(m,i){
+                return h("div",{key:i},
+                  h("div",{className:"flex justify-between text-xs mb-1"},
+                    h("span",{className:"text-zinc-400"}, m.l),
+                    h("span",null, formatMoney(m.v)+" / "+formatMoney(m.t)+" ("+m.p.toFixed(0)+"%)")),
+                  h("div",{className:"h-2.5 bg-[var(--bg-hover)] rounded-full overflow-hidden"},
+                    h("div",{className:"h-full gradient-bg",style:{width:Math.min(100,m.p)+"%"}})));
+              })))
+        ),
+        tab==="analise" && h(Fragment, null,
+          h("section",{className:"card rounded-2xl p-5"},
+            h("div",{className:"flex items-center gap-2 mb-3"},
+              h(Icon,{name:"activity",size:18,className:"text-yellow-400"}),
+              h("h2",{className:"text-sm font-bold uppercase tracking-wider"},"Saúde Financeira")),
+            h("div",{className:"flex flex-col sm:flex-row items-center gap-5"},
+              h("div",{className:"relative w-32 h-32 shrink-0"},
+                h("svg",{viewBox:"0 0 120 120",width:128,height:128,className:"-rotate-90"},
+                  h("circle",{cx:60,cy:60,r:50,stroke:"#2e2e2e",strokeWidth:10,fill:"none"}),
+                  h("circle",{cx:60,cy:60,r:50,stroke:"url(#scoreGrad)",strokeWidth:10,fill:"none",
+                    strokeDasharray:Math.PI*100, strokeDashoffset:Math.PI*100*(1-saude.score/100), strokeLinecap:"round"}),
+                  h("defs",null,h("linearGradient",{id:"scoreGrad",x1:"0",y1:"0",x2:"1",y2:"0"},
+                    h("stop",{offset:"0%",stopColor:"#FFB800"}),
+                    h("stop",{offset:"100%",stopColor:"#FF6B00"})))),
+                h("div",{className:"absolute inset-0 flex items-center justify-center"},
+                  h("div",{className:"text-center"},
+                    h("p",{className:"text-3xl font-extrabold gradient-text"}, saude.score),
+                    h("p",{className:"text-[10px] text-zinc-500 uppercase tracking-wider"},"Score")))),
+              h("div",{className:"flex-1 grid grid-cols-1 gap-2 w-full"},
+                h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3"},
+                  h("p",{className:"text-xs text-zinc-500"},"% Poupado este mês"),
+                  h("p",{className:"text-lg font-bold "+(saude.pctPoupado>=20?"text-green-400":saude.pctPoupado>=0?"text-yellow-400":"text-red-400")},
+                    saude.pctPoupado.toFixed(1)+"%")),
+                h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3"},
+                  h("p",{className:"text-xs text-zinc-500"},"% Comprometido com fixos"),
+                  h("p",{className:"text-lg font-bold "+(saude.pctFixos<=30?"text-green-400":saude.pctFixos<=50?"text-yellow-400":"text-red-400")},
+                    saude.pctFixos.toFixed(1)+"%"))))),
+          h("section",{className:"card rounded-2xl p-5"},
+            h("div",{className:"flex items-center gap-2 mb-3"},
+              h(Icon,{name:"barChart",size:18,className:"text-yellow-400"}),
+              h("h2",{className:"text-sm font-bold uppercase tracking-wider"},"Comparativo Mês a Mês (6 meses)"),
+              h("div",{className:"ml-auto flex items-center gap-3 text-[10px]"},
+                h("span",{className:"flex items-center gap-1"},h("span",{className:"w-2 h-2 bg-green-500 rounded-sm"}),"Entradas"),
+                h("span",{className:"flex items-center gap-1"},h("span",{className:"w-2 h-2 bg-orange-500 rounded-sm"}),"Saídas"))),
+            h(BarChart,{data:dadosBarMeses})),
+          h("section",{className:"card rounded-2xl p-5"},
+            h("div",{className:"flex items-center gap-2 mb-3"},
+              h(Icon,{name:"trendingUp",size:18,className:"text-yellow-400"}),
+              h("h2",{className:"text-sm font-bold uppercase tracking-wider"},"Projeção até o fim do mês"),
+              h("span",{className:"ml-auto text-[10px] text-zinc-500"},projecao.diasRestantes+" dias restantes")),
+            h("div",{className:"grid grid-cols-3 gap-2"},
+              h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3"},
+                h("p",{className:"text-[10px] uppercase text-zinc-500"},"Entradas projetadas"),
+                h("p",{className:"text-base font-bold text-green-400"}, formatMoney(projecao.entrada))),
+              h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3"},
+                h("p",{className:"text-[10px] uppercase text-zinc-500"},"Saídas projetadas"),
+                h("p",{className:"text-base font-bold text-orange-400"}, formatMoney(projecao.saida))),
+              h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3"},
+                h("p",{className:"text-[10px] uppercase text-zinc-500"},"Líquido projetado"),
+                h("p",{className:"text-base font-bold "+(projecao.liquido>=0?"gradient-text":"text-red-500")},
+                  formatMoney(projecao.liquido))))),
+          h("section",{className:"card rounded-2xl p-5"},
+            h("div",{className:"flex items-center gap-2 mb-3"},
+              h(Icon,{name:"flame",size:18,className:"text-orange-500"}),
+              h("h2",{className:"text-sm font-bold uppercase tracking-wider"},"Top 5 Maiores Despesas")),
+            topDespesas.length===0
+              ? h("p",{className:"text-sm text-zinc-500 text-center py-4"},"Sem despesas no período")
+              : h("ul",{className:"space-y-2"},
+                  topDespesas.map(function(t,i){
+                    var c = getCat(t.categoria);
+                    return h("li",{key:t.id,className:"flex items-center gap-3 p-2 rounded-lg"},
+                      h("span",{className:"text-xs font-bold text-zinc-500 w-5"}, "#"+(i+1)),
+                      h("div",{className:"w-8 h-8 rounded-lg flex items-center justify-center",
+                        style:{background:c.color+"22",color:c.color}}, h(Icon,{name:c.icon,size:14})),
+                      h("div",{className:"flex-1 min-w-0"},
+                        h("p",{className:"text-sm font-semibold truncate"}, t.descricao),
+                        h("p",{className:"text-[11px] text-zinc-500"}, c.label+" • "+formatDate(t.data))),
+                      h("p",{className:"text-sm font-bold text-red-400 shrink-0"}, formatMoney(t.valor)));
+                  })))
+        ),
+        tab==="transacoes" && h(Fragment, null,
+          h("section",{className:"card rounded-2xl p-3"},
+            h("div",{className:"flex items-center gap-2"},
+              h(Icon,{name:"search",size:18,className:"text-zinc-500 shrink-0 ml-1"}),
+              h("input",{id:"search-input",type:"text",placeholder:"Buscar por descrição… (atalho: /)",
+                value:busca,onChange:function(e){setBusca(e.target.value);},
+                className:"flex-1 bg-transparent text-sm focus:outline-none text-white placeholder:text-zinc-500"}),
+              busca && h("button",{onClick:function(){setBusca("");},className:"text-zinc-500 hover:text-white"},
+                h(Icon,{name:"x",size:14})))),
+          h("section",{className:"card rounded-2xl p-3 sm:p-4"},
+            h("button",{onClick:function(){setShowFiltros(!showFiltros);},
+              className:"w-full flex items-center justify-between text-left"},
+              h("div",{className:"flex items-center gap-2"},
+                h(Icon,{name:"filter",size:16,className:"text-yellow-400"}),
+                h("span",{className:"font-semibold text-sm"},"Filtros"),
+                h("span",{className:"text-xs text-zinc-500"},
+                  "("+filtroPeriodo+" • "+(filtroCategoria==="todas"?"todas":getCat(filtroCategoria).label)+")")),
+              h(Icon,{name:showFiltros?"x":"plus",size:14})),
+            showFiltros ? h("div",{className:"mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3"},
+              h("div",null,
+                h("label",{className:"text-xs text-zinc-400 uppercase mb-1 block font-semibold"},"Período"),
+                h("div",{className:"grid grid-cols-4 gap-1 bg-[var(--bg-hover)] p-1 rounded-xl"},
+                  [{id:"dia",label:"Dia"},{id:"semana",label:"Semana"},{id:"mes",label:"Mês"},{id:"todos",label:"Todos"}]
+                    .map(function(p){
+                      return h("button",{key:p.id,onClick:function(){setFiltroPeriodo(p.id);},
+                        className:"py-2 text-xs font-bold rounded-lg transition "+(filtroPeriodo===p.id?"gradient-bg text-black":"text-zinc-400")},
+                        p.label);
+                    }))),
+              h("div",null,
+                h("label",{className:"text-xs text-zinc-400 uppercase mb-1 block font-semibold"},"Categoria"),
+                h("select",{value:filtroCategoria,onChange:function(e){setFiltroCategoria(e.target.value);},
+                  className:"input w-full rounded-xl px-3 py-2 text-sm"},
+                  h("option",{value:"todas"},"Todas as categorias"),
+                  h("optgroup",{label:"Entradas"},
+                    categorias.filter(function(c){return c.tipo==="entrada";}).map(function(c){return h("option",{key:c.id,value:c.id},c.label);})),
+                  h("optgroup",{label:"Saídas"},
+                    categorias.filter(function(c){return c.tipo==="saida";}).map(function(c){return h("option",{key:c.id,value:c.id},c.label);})))),
+              h("button",{onClick:function(){setShowCats(true);},
+                className:"sm:col-span-2 card py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 text-orange-400"},
+                h(Icon,{name:"palette",size:14})," Gerenciar categorias")) : null),
+          h("section",{className:"card rounded-2xl overflow-hidden"},
+            h("div",{className:"flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-[var(--border)]"},
+              h("div",{className:"flex items-center gap-2"},
+                h(Icon,{name:"list",size:18,className:"text-yellow-400"}),
+                h("h2",{className:"font-bold"},"Transações"),
+                h("span",{className:"text-xs text-zinc-500"},"("+transacoesFiltradas.length+")"))),
+            transacoesFiltradas.length===0
+              ? h("div",{className:"p-10 text-center text-zinc-500"},
+                  h(Icon,{name:"receipt",size:48,className:"mx-auto mb-3 opacity-30"}),
+                  h("p",null,"Nenhuma transação no filtro atual."),
+                  h("button",{onClick:function(){setEditing(null);setShowForm(true);},
+                    className:"mt-3 text-orange-400 hover:underline text-sm"}, "Adicionar a primeira →"))
+              : h("ul",{className:"divide-y divide-[var(--border)]"},
+                  transacoesFiltradas.map(function(t){
+                    var c=getCat(t.categoria), w=getWallet(t.carteira), isEnt=t.tipo==="entrada";
+                    return h("li",{key:t.id,className:"px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-[var(--bg-hover)] transition"},
+                      h("div",{className:"w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                        style:{background:c.color+"22",color:c.color}}, h(Icon,{name:c.icon,size:18})),
+                      h("div",{className:"flex-1 min-w-0"},
+                        h("p",{className:"font-semibold truncate flex items-center gap-1.5"},
+                          t.descricao,
+                          t.recorrente ? h(Icon,{name:"repeat",size:11,className:"text-orange-400 shrink-0"}) : null,
+                          t.comprovante ? h(Icon,{name:"paperclip",size:11,className:"text-zinc-500 shrink-0"}) : null),
+                        h("div",{className:"flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-zinc-500"},
+                          h("span",null,c.label),
+                          h("span",null,"•"),
+                          h("span",null,formatDate(t.data)),
+                          t.hora ? h(Fragment,null,h("span",null,"•"),h("span",null,t.hora)) : null,
+                          h("span",null,"•"),
+                          h("span",{style:{color:w.color}}, w.label),
+                          t.km ? h(Fragment,null,h("span",null,"•"),h("span",null,t.km+" km")) : null,
+                          t.horas ? h(Fragment,null,h("span",null,"•"),h("span",null,t.horas+" h")) : null)),
+                      h("div",{className:"text-right shrink-0"},
+                        h("p",{className:"font-extrabold text-sm sm:text-base whitespace-nowrap "+(isEnt?"text-green-500":"text-red-500")},
+                          (isEnt?"+ ":"− ")+formatMoney(t.valor)),
+                        h("div",{className:"flex gap-2 justify-end mt-1"},
+                          h("button",{onClick:function(){setEditing(t);setShowForm(true);},
+                            className:"text-zinc-500 hover:text-yellow-400",title:"Editar"},h(Icon,{name:"edit",size:13})),
+                          h("button",{onClick:function(){remover(t.id);},
+                            className:"text-zinc-500 hover:text-red-500",title:"Remover"},h(Icon,{name:"trash",size:13})))));
+                  })))
+        ),
+        h("a",{href:"https://mpago.la/2z5Uj6E",target:"_blank",rel:"noopener noreferrer",
+          className:"sm:hidden flex items-center justify-center gap-2 bg-orange-500/10 border border-orange-500/40 text-orange-400 px-4 py-3 rounded-xl font-bold"},
+          h(Icon,{name:"heart",size:16})," Apoiar Projeto via Pix"),
+        h("footer",{className:"text-center text-[11px] text-zinc-600 pt-2"},
+          h("p",null,"FinanceiroPro Elite • dados salvos localmente neste dispositivo"),
+          h("p",{className:"mt-1"},"Pressione ",h("kbd",{className:"px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400"},"N"),
+            " para nova transação • ", h("kbd",{className:"px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400"},"/"), " para buscar"))
+      ),
+      h("button",{onClick:function(){setEditing(null);setShowForm(true);},
+        className:"pulse-orange fixed bottom-6 right-6 w-14 h-14 sm:w-16 sm:h-16 rounded-full gradient-bg text-black shadow-2xl flex items-center justify-center hover:scale-105 transition z-40",
+        title:"Nova transação (N)"},
+        h(Icon,{name:"plus",size:26})),
+      showForm && h(TransactionForm,{
+        editing:editing, categorias:categorias, carteiras:carteiras,
+        onSave:salvar, onClose:function(){setShowForm(false);setEditing(null);}}),
+      showCats && h(CategoriasManager,{
+        categorias:categorias, onAdd:addCategoria, onRemove:removeCategoria,
+        onClose:function(){setShowCats(false);}}),
+      showSettings && h(Settings,{
+        transacoes:transacoes, categorias:categorias, carteiras:carteiras, meta:meta, theme:theme,
+        setTransacoes:setTransacoes, setCategorias:setCategorias, setCarteiras:setCarteiras,
+        setMeta:setMeta, setTheme:setTheme, toast:toastMgr.push,
+        onClose:function(){setShowSettings(false);}}),
+      showOnboarding && h(Onboarding,{onDone:function(){setShowOnboarding(false); save("fp_onboarded",true);}}),
+      h(ToastContainer,{toasts:toastMgr.toasts})
+    );
+  }
+  var manifest = {
+    name: "FinanceiroPro Elite", short_name: "FP Elite",
+    start_url: ".", display: "standalone",
+    background_color: "#1a1a1a", theme_color: "#FF6B00",
+    icons: [{
+      src: "data:image/svg+xml;base64,"+btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFB800"/><stop offset="100%" stop-color="#FF6B00"/></linearGradient></defs><rect width="192" height="192" rx="40" fill="url(#g)"/><path d="M50 90v40h90v-30h-30a10 10 0 0 1 0-20h30v-30H60a10 10 0 0 0 0 20" fill="#1a1a1a"/></svg>'),
+      sizes: "192x192", type: "image/svg+xml"
+    }]
+  };
+  var mBlob = new Blob([JSON.stringify(manifest)],{type:"application/json"});
+  var mLink = document.createElement("link");
+  mLink.rel = "manifest"; mLink.href = URL.createObjectURL(mBlob);
+  document.head.appendChild(mLink);
+
+  var loader = document.getElementById("loader");
+  if (loader) loader.remove();
+  ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+})();
+</script>
+</body>
+</html>
