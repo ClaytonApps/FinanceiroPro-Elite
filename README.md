@@ -110,7 +110,7 @@ Faça download do `index.html` e abra com duplo clique. Pronto.
 
 ```bash
 # Clone o repositório
-git clone https://github.com/ClaytonApps/FinanceiroProElite.git
+git clone https://github.com/ClaytonApps/financeiropro-elite.git
 cd financeiropro-elite
 
 # Sirva com qualquer servidor estático
@@ -125,7 +125,7 @@ Abra `http://localhost:8000` (ou a porta indicada).
 
 1. Vá em **Settings → Pages**
 2. Selecione branch `main` e pasta `/ (root)`
-3. Salve. O app ficará disponível em `https://ClaytonApps.github.io/FinanceiroProElite/`
+3. Salve. O app ficará disponível em `https://ClaytonApps.github.io/financeiropro-elite/`
 
 ---
 
@@ -198,7 +198,7 @@ Contribuições são muito bem-vindas! 🧡
 
 ### Reportar Bugs
 
-Abra uma [Issue](https://github.com/ClaytonApps/FinanceiroProElite/issues) descrevendo:
+Abra uma [Issue](https://github.com/ClaytonApps/financeiropro-elite/issues) descrevendo:
 
 - Passos para reproduzir
 - Comportamento esperado vs observado
