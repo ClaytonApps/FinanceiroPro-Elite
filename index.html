@@ -145,7 +145,9 @@ window.addEventListener("error", function (ev) {
     chevronLeft: "M15 18l-6-6 6-6",
     chevronRight: "M9 18l6-6-6-6",
     check: "M20 6L9 17l-5-5",
-    palette: "M12 22a10 10 0 1 1 0-20 8 8 0 0 1 8 8c0 4-3 4-3 7s-2 5-5 5zM6.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM10 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM15 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
+    palette: "M12 22a10 10 0 1 1 0-20 8 8 0 0 1 8 8c0 4-3 4-3 7s-2 5-5 5zM6.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM10 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM15 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z",
+    mic: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8",
+    micOff: "M1 1l22 22M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23M12 19v4M8 23h8"
   };
   function Icon(props) {
     var size = props.size || 20;
@@ -408,7 +410,7 @@ window.addEventListener("error", function (ev) {
     return h("div",{className:"fixed inset-0 modal-overlay z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"},
       h("div",{className:"card rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto"},
         h("div",{className:"sticky top-0 card flex items-center justify-between px-5 py-4 border-b border-[var(--border)] z-10"},
-          h("h3",{className:"text-lg font-bold gradient-text"}, editing?"Editar Transação":"Nova Transação"),
+          h("h3",{className:"text-lg font-bold gradient-text"}, (editing && editing.id)?"Editar Transação":"Nova Transação"),
           h("button",{onClick:props.onClose,className:"text-zinc-400 hover:text-white"}, h(Icon,{name:"x"}))),
         h("form",{onSubmit:submit,className:"p-5 space-y-4"},
           h("div",{className:"grid grid-cols-2 gap-2"},
@@ -523,7 +525,7 @@ window.addEventListener("error", function (ev) {
               : h("input",{type:"file",accept:"image/*",onChange:onFile,
                   className:"input w-full rounded-xl px-3 py-2 text-sm file:bg-orange-500 file:text-black file:rounded-lg file:px-3 file:py-1 file:mr-3 file:border-0 file:font-semibold"})),
           h("button",{type:"submit",className:"w-full gradient-bg text-black font-bold py-3 rounded-xl hover:opacity-90 transition"},
-            editing?"Salvar Alterações":"Adicionar Transação"))));
+            (editing && editing.id)?"Salvar Alterações":"Adicionar Transação"))));
   }
   function Onboarding(props) {
     var s = useState(0); var step = s[0], setStep = s[1];
@@ -778,6 +780,7 @@ window.addEventListener("error", function (ev) {
             h("h4",{className:"text-xs uppercase tracking-wider text-zinc-500 mb-2"},"Atalhos de teclado"),
             h("div",{className:"card rounded-xl p-3 text-xs text-zinc-400 space-y-1"},
               h("div",null,h("kbd",{className:"px-1.5 py-0.5 bg-zinc-700 rounded mr-2"},"N")," Nova transação"),
+              h("div",null,h("kbd",{className:"px-1.5 py-0.5 bg-zinc-700 rounded mr-2"},"V")," Adicionar por voz"),
               h("div",null,h("kbd",{className:"px-1.5 py-0.5 bg-zinc-700 rounded mr-2"},"F")," Abrir filtros"),
               h("div",null,h("kbd",{className:"px-1.5 py-0.5 bg-zinc-700 rounded mr-2"},"/")," Buscar"),
               h("div",null,h("kbd",{className:"px-1.5 py-0.5 bg-zinc-700 rounded mr-2"},"Esc")," Fechar modal"))),
@@ -785,6 +788,231 @@ window.addEventListener("error", function (ev) {
             className:"w-full bg-red-500/10 border border-red-500/30 text-red-400 py-3 rounded-xl font-semibold"},
             "Apagar todas as transações"))));
   }
+  var NUMEROS_PT = {
+    "zero":0,"um":1,"uma":1,"dois":2,"duas":2,"tres":3,"três":3,"quatro":4,"cinco":5,
+    "seis":6,"sete":7,"oito":8,"nove":9,"dez":10,"onze":11,"doze":12,"treze":13,
+    "quatorze":14,"catorze":14,"quinze":15,"dezesseis":16,"dezessete":17,"dezoito":18,
+    "dezenove":19,"vinte":20,"trinta":30,"quarenta":40,"cinquenta":50,"cinqüenta":50,
+    "sessenta":60,"setenta":70,"oitenta":80,"noventa":90,"cem":100,"cento":100,
+    "duzentos":200,"trezentos":300,"quatrocentos":400,"quinhentos":500,
+    "seiscentos":600,"setecentos":700,"oitocentos":800,"novecentos":900,"mil":1000
+  };
+  function parseNumeroExtenso(text) {
+    var words = text.toLowerCase().replace(/[.,]/g," ").split(/\s+/);
+    var total = 0, current = 0, found = false;
+    for (var i=0;i<words.length;i++){
+      var w = words[i];
+      if (w === "e" && found) continue;
+      if (NUMEROS_PT[w] != null) {
+        var n = NUMEROS_PT[w];
+        if (n === 1000) { current = (current||1)*1000; total += current; current = 0; }
+        else if (n === 100) { current = (current||1)*100; }
+        else current += n;
+        found = true;
+      } else if (found && current>0) { total += current; current = 0; found = false; break; }
+    }
+    total += current;
+    return found && total>0 ? total : null;
+  }
+  function parseVoiceCommand(text, categorias) {
+    var lower = text.toLowerCase().trim();
+    var tipo = "saida";
+    if (/(receb|ganh|entrou|sal[áa]rio|cr[ée]dito|pix recebid|deposit|entrada de|fiz|faturei)/i.test(lower)) tipo = "entrada";
+    if (/(gast|paguei|pague|comprei|despesa|sa[íi]da|d[ée]bito|dev|saiu)/i.test(lower)) tipo = "saida";
+
+    var valor = null;
+    var m = lower.match(/r\$\s*(\d+(?:[.,]\d+)?)/);
+    if (!m) m = lower.match(/(\d+(?:[.,]\d+)?)\s*(?:reais|real|conto|pila|mangos|paus)/);
+    if (!m) m = lower.match(/\b(\d+(?:[.,]\d+)?)\b/);
+    if (m) valor = parseFloat(m[1].replace(",","."));
+    if (!valor) {
+      var ext = parseNumeroExtenso(lower);
+      if (ext) valor = ext;
+    }
+
+    var keywords = {
+      combustivel: /(combust[íi]vel|gasolina|álcool|alcool|etanol|diesel|posto|abastec|gas)/i,
+      manutencao: /(manuten[çc][ãa]o|oficina|mec[âa]nico|[óo]leo|pneu|revis[ãa]o|funilaria|trocou)/i,
+      alimentacao: /(almo[çc]o|jantar|caf[ée]|comida|lanche|alimenta[çc][ãa]o|restaurante|mercado|padaria|ifood|rappi|pizza|hamb)/i,
+      lazer: /(lazer|cinema|festa|bar|cerveja|streaming|netflix|spotify|prime|jogo|shopping)/i,
+      contas: /(aluguel|luz|[áa]gua|internet|telefone|condom[íi]nio|fatura|boleto|conta de|energia|[íi]ptu|seguro)/i,
+      salario: /(sal[áa]rio|holerite|sal[áa]rio fixo|13[ºo°])/i,
+      variavel: /(uber|99|indriver|cabify|app|corrida|jornada|motorista|rod[ée]i|trabalho|turno)/i
+    };
+    var categoriaDetectada = null;
+    for (var key in keywords) { if (keywords[key].test(lower)) { categoriaDetectada = key; break; } }
+    var existeCat = categoriaDetectada && categorias.some(function(c){ return c.id===categoriaDetectada; });
+    if (!existeCat) {
+      categoriaDetectada = tipo === "entrada"
+        ? (categorias.filter(function(c){return c.tipo==="entrada";})[0]||{}).id
+        : (categorias.filter(function(c){return c.tipo==="saida";})[0]||{}).id;
+    } else {
+      var cat = categorias.filter(function(c){return c.id===categoriaDetectada;})[0];
+      if (cat) tipo = cat.tipo;
+    }
+
+    var desc = text.trim();
+    desc = desc.replace(/r\$\s*\d+(?:[.,]\d+)?/gi,"");
+    desc = desc.replace(/\d+(?:[.,]\d+)?\s*(reais|real|conto|pila|mangos|paus)/gi,"");
+    desc = desc.replace(/\b\d+(?:[.,]\d+)?\b/g,"");
+    desc = desc.replace(/\b(de|do|da|com|para|pra|por|gastei|paguei|comprei|recebi|ganhei|foi|um|uma)\b/gi," ");
+    desc = desc.replace(/\s+/g," ").trim();
+    if (!desc) desc = "Lançamento por voz";
+    desc = desc.charAt(0).toUpperCase() + desc.slice(1);
+
+    return { tipo: tipo, valor: valor, descricao: desc, categoria: categoriaDetectada,
+             data: todayKey(), original: text };
+  }
+
+  function VoiceCapture(props) {
+    var s = useState("idle"); var status=s[0], setStatus=s[1];
+    var s2 = useState(""); var transcript=s2[0], setTranscript=s2[1];
+    var s3 = useState(""); var error=s3[0], setError=s3[1];
+    var s4 = useState(null); var preview=s4[0], setPreview=s4[1];
+    var recRef = useRef(null);
+
+    function start() {
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        setError("Seu navegador não suporta reconhecimento de voz. Use Chrome, Edge ou Safari (no celular).");
+        setStatus("error"); return;
+      }
+      try {
+        var rec = new SR();
+        rec.lang = "pt-BR";
+        rec.interimResults = true;
+        rec.continuous = false;
+        rec.maxAlternatives = 1;
+        rec.onstart = function(){ setStatus("listening"); setError(""); };
+        rec.onresult = function(e){
+          var t = "";
+          for (var i=0;i<e.results.length;i++) t += e.results[i][0].transcript;
+          setTranscript(t);
+          if (e.results[e.results.length-1].isFinal) {
+            var parsed = parseVoiceCommand(t, props.categorias);
+            setPreview(parsed); setStatus("done");
+          }
+        };
+        rec.onerror = function(e){
+          var msgs = { "no-speech":"Não captei sua voz. Tente novamente.",
+                       "not-allowed":"Permissão de microfone negada. Habilite nas configurações do navegador.",
+                       "audio-capture":"Microfone não encontrado.",
+                       "network":"Erro de rede no reconhecimento." };
+          setError(msgs[e.error] || ("Erro: "+e.error));
+          setStatus("error");
+        };
+        rec.onend = function(){
+          setStatus(function(prev){
+            if (prev === "listening") {
+              if (transcript) {
+                var parsed = parseVoiceCommand(transcript, props.categorias);
+                setPreview(parsed); return "done";
+              }
+              return "idle";
+            }
+            return prev;
+          });
+        };
+        recRef.current = rec;
+        rec.start();
+      } catch(e) { setError(e.message); setStatus("error"); }
+    }
+
+    function stop() { try { recRef.current && recRef.current.stop(); } catch(e){} }
+
+    useEffect(function(){
+      var t = setTimeout(start, 200);
+      return function(){ clearTimeout(t); stop(); };
+    }, []);
+
+    function confirm() {
+      if (!preview) return;
+      if (!preview.valor || preview.valor <= 0) { alert("Não consegui identificar o valor. Diga, por exemplo: 'Combustível 50 reais'"); return; }
+      props.onCapture(preview);
+      props.onClose();
+    }
+
+    function tryAgain() {
+      setTranscript(""); setPreview(null); setError(""); setStatus("idle"); start();
+    }
+
+    var cat = preview ? props.categorias.filter(function(c){return c.id===preview.categoria;})[0] : null;
+
+    return h("div",{className:"fixed inset-0 modal-overlay z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4"},
+      h("div",{className:"card rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto"},
+        h("div",{className:"sticky top-0 card flex items-center justify-between px-5 py-4 border-b border-[var(--border)] z-10"},
+          h("div",{className:"flex items-center gap-2"},
+            h(Icon,{name:"mic",size:20,className:"text-orange-400"}),
+            h("h3",{className:"text-lg font-bold gradient-text"},"Adicionar por Voz")),
+          h("button",{onClick:props.onClose,className:"text-zinc-400 hover:text-white"},h(Icon,{name:"x"}))),
+        h("div",{className:"p-5 space-y-4"},
+          status === "error" && h("div",{className:"bg-red-500/10 border border-red-500/40 rounded-xl p-4 text-sm"},
+            h("p",{className:"text-red-400 font-bold mb-1 flex items-center gap-2"},
+              h(Icon,{name:"x",size:14})," Erro"),
+            h("p",{className:"text-zinc-300"}, error),
+            h("button",{onClick:tryAgain,
+              className:"mt-3 gradient-bg text-black px-4 py-2 rounded-lg font-bold text-sm"},"Tentar novamente")),
+          (status === "idle" || status === "listening") && h("div",{className:"text-center py-6"},
+            h("div",{className:(status==="listening"?"pulse-orange ":"")+"w-28 h-28 rounded-full mx-auto flex items-center justify-center mb-4 "+
+              (status==="listening"?"gradient-bg text-black":"bg-[var(--bg-hover)] text-zinc-500")},
+              h(Icon,{name:"mic",size:48})),
+            h("p",{className:"text-lg font-bold mb-2"},
+              status === "listening" ? "Estou ouvindo…" : "Clique em começar"),
+            h("p",{className:"text-sm text-zinc-400 mb-4"},
+              status === "listening"
+                ? "Fale agora, ex: \"Combustível 50 reais\""
+                : "Permita o uso do microfone quando solicitado"),
+            transcript && h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3 text-sm text-zinc-300 italic mb-3"},
+              "\""+transcript+"\""),
+            status === "idle" && h("button",{onClick:start,
+              className:"gradient-bg text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 mx-auto"},
+              h(Icon,{name:"mic",size:16})," Começar a falar"),
+            status === "listening" && h("button",{onClick:stop,
+              className:"bg-red-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 mx-auto"},
+              h(Icon,{name:"micOff",size:16})," Parar")),
+          status === "done" && preview && h(Fragment, null,
+            h("div",{className:"bg-[var(--bg-hover)] rounded-xl p-3 text-sm text-zinc-300 italic"},
+              h("p",{className:"text-[10px] uppercase text-zinc-500 mb-1"},"Você disse"),
+              "\""+preview.original+"\""),
+            h("div",{className:"card rounded-xl p-4 space-y-3 border border-orange-500/30"},
+              h("p",{className:"text-[10px] uppercase tracking-wider text-orange-400 font-bold"},"Identificado"),
+              h("div",{className:"grid grid-cols-2 gap-3"},
+                h("div",null,
+                  h("p",{className:"text-[10px] uppercase text-zinc-500"},"Tipo"),
+                  h("p",{className:"font-bold "+(preview.tipo==="entrada"?"text-green-400":"text-red-400")},
+                    preview.tipo==="entrada"?"Entrada":"Saída")),
+                h("div",null,
+                  h("p",{className:"text-[10px] uppercase text-zinc-500"},"Valor"),
+                  h("p",{className:"font-extrabold gradient-text text-lg"},
+                    preview.valor ? formatMoney(preview.valor) : "—")),
+                h("div",null,
+                  h("p",{className:"text-[10px] uppercase text-zinc-500"},"Categoria"),
+                  h("p",{className:"font-bold flex items-center gap-1"},
+                    cat ? h(Icon,{name:cat.icon,size:14,className:"shrink-0",style:{color:cat.color}}) : null,
+                    cat ? cat.label : "—")),
+                h("div",null,
+                  h("p",{className:"text-[10px] uppercase text-zinc-500"},"Descrição"),
+                  h("p",{className:"font-bold truncate"}, preview.descricao)))),
+            !preview.valor && h("p",{className:"text-xs text-yellow-400 bg-yellow-500/10 p-2 rounded-lg"},
+              "⚠ Valor não identificado. Você poderá ajustar no formulário."),
+            h("div",{className:"flex gap-2"},
+              h("button",{onClick:tryAgain,
+                className:"flex-1 card py-3 rounded-xl font-semibold flex items-center justify-center gap-1"},
+                h(Icon,{name:"mic",size:14})," Falar de novo"),
+              h("button",{onClick:confirm,
+                className:"flex-[2] gradient-bg text-black py-3 rounded-xl font-extrabold flex items-center justify-center gap-1"},
+                h(Icon,{name:"check",size:14})," Revisar e salvar"))),
+          h("details",{className:"text-xs text-zinc-500"},
+            h("summary",{className:"cursor-pointer hover:text-zinc-300"},"💡 Exemplos do que você pode dizer"),
+            h("ul",{className:"mt-2 space-y-1 list-disc list-inside"},
+              h("li",null,"\"Combustível 80 reais\""),
+              h("li",null,"\"Almoço 25\""),
+              h("li",null,"\"Recebi 200 reais Uber\""),
+              h("li",null,"\"Paguei aluguel 1500\""),
+              h("li",null,"\"Mercado cinquenta reais\""),
+              h("li",null,"\"Manutenção 350 reais óleo\""))))));
+  }
+
   function MetaEditor(props) {
     var s1 = useState(props.meta.diaria ? String(props.meta.diaria) : "");
     var diaria = s1[0], setDiaria = s1[1];
@@ -912,6 +1140,7 @@ window.addEventListener("error", function (ev) {
     var showOnboarding=s14[0], setShowOnboarding=s14[1];
     var s15 = useState("dashboard"); var tab=s15[0], setTab=s15[1];
     var s16 = useState(false); var showMetaEditor=s16[0], setShowMetaEditor=s16[1];
+    var s17 = useState(false); var showVoice=s17[0], setShowVoice=s17[1];
 
     var toastMgr = useToasts();
     useEffect(function(){
@@ -948,9 +1177,10 @@ window.addEventListener("error", function (ev) {
       function onKey(e){
         if (e.target && (e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"||e.target.tagName==="SELECT")) return;
         if (e.key==="n"||e.key==="N") { e.preventDefault(); setEditing(null); setShowForm(true); }
+        if (e.key==="v"||e.key==="V") { e.preventDefault(); setShowVoice(true); }
         if (e.key==="f"||e.key==="F") { e.preventDefault(); setShowFiltros(function(v){return !v;}); }
         if (e.key==="/") { e.preventDefault(); var el=document.getElementById("search-input"); if (el) el.focus(); }
-        if (e.key==="Escape") { setShowForm(false); setShowCats(false); setShowSettings(false); }
+        if (e.key==="Escape") { setShowForm(false); setShowCats(false); setShowSettings(false); setShowVoice(false); }
       }
       window.addEventListener("keydown", onKey);
       return function(){ window.removeEventListener("keydown", onKey); };
@@ -1470,6 +1700,10 @@ window.addEventListener("error", function (ev) {
           h("p",{className:"mt-1"},"Pressione ",h("kbd",{className:"px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400"},"N"),
             " para nova transação • ", h("kbd",{className:"px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400"},"/"), " para buscar"))
       ),
+      h("button",{onClick:function(){setShowVoice(true);},
+        className:"fixed bottom-24 right-6 sm:bottom-28 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[var(--bg-elevated)] border-2 border-orange-500 text-orange-400 shadow-2xl flex items-center justify-center hover:bg-orange-500 hover:text-black transition z-40",
+        title:"Adicionar por voz"},
+        h(Icon,{name:"mic",size:22})),
       h("button",{onClick:function(){setEditing(null);setShowForm(true);},
         className:"pulse-orange fixed bottom-6 right-6 w-14 h-14 sm:w-16 sm:h-16 rounded-full gradient-bg text-black shadow-2xl flex items-center justify-center hover:scale-105 transition z-40",
         title:"Nova transação (N)"},
@@ -1490,6 +1724,18 @@ window.addEventListener("error", function (ev) {
       showMetaEditor && h(MetaEditor,{
         meta:meta, setMeta:setMeta, toast:toastMgr.push,
         onClose:function(){setShowMetaEditor(false);}}),
+      showVoice && h(VoiceCapture,{
+        categorias:categorias,
+        onCapture:function(parsed){
+          setEditing({
+            tipo: parsed.tipo, categoria: parsed.categoria,
+            descricao: parsed.descricao, valor: parsed.valor || "",
+            data: parsed.data, carteira: carteiras[0].id
+          });
+          setShowForm(true);
+          toastMgr.push("Captura por voz reconhecida!","success");
+        },
+        onClose:function(){setShowVoice(false);}}),
       showOnboarding && h(Onboarding,{onDone:function(dontShowAgain){
         setShowOnboarding(false);
         if (dontShowAgain) save("fp_skip_demo", true);
