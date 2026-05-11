@@ -66,10 +66,14 @@ Interface 100% responsiva com **dark mode** (padrão) e **light mode** opcional.
 
 ### Persistência e Backup
 
-- **localStorage** — dados ficam apenas no seu dispositivo
+- **localStorage** — dados ficam no dispositivo (modo offline/sem login)
+- **🔥 Firebase + Google Auth** — login opcional para sincronização na nuvem multi-dispositivo
+- **☁️ Firestore** — backup automático em tempo real (grátis no plano Spark)
 - **Exportar JSON** — backup completo
 - **Importar JSON** — restaurar de backup
 - **Exportar CSV** (UTF-8 com BOM, abre direto no Excel)
+
+> 📘 Quer ativar a sincronização na nuvem? Veja o guia **[FIREBASE_SETUP.md](FIREBASE_SETUP.md)** — 10 minutos do zero ao app na nuvem do Google, gratuito.
 
 ### Experiência
 

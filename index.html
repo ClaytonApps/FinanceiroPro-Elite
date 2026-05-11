@@ -78,6 +78,20 @@
 
 <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<script>
+window.FIREBASE_CONFIG = {
+  apiKey: "PLACEHOLDER",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+</script>
 
 <script>
 window.addEventListener("error", function (ev) {
@@ -147,7 +161,13 @@ window.addEventListener("error", function (ev) {
     check: "M20 6L9 17l-5-5",
     palette: "M12 22a10 10 0 1 1 0-20 8 8 0 0 1 8 8c0 4-3 4-3 7s-2 5-5 5zM6.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM10 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM15 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z",
     mic: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8",
-    micOff: "M1 1l22 22M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23M12 19v4M8 23h8"
+    micOff: "M1 1l22 22M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23M12 19v4M8 23h8",
+    cloud: "M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z",
+    cloudOff: "M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6M5 5l14 14M2 2l20 20",
+    logIn: "M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3",
+    logOut: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
+    user: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+    refreshCw: "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
   };
   function Icon(props) {
     var size = props.size || 20;
@@ -1141,6 +1161,126 @@ window.addEventListener("error", function (ev) {
     var s15 = useState("dashboard"); var tab=s15[0], setTab=s15[1];
     var s16 = useState(false); var showMetaEditor=s16[0], setShowMetaEditor=s16[1];
     var s17 = useState(false); var showVoice=s17[0], setShowVoice=s17[1];
+    var sFb1 = useState(null); var fbUser=sFb1[0], setFbUser=sFb1[1];
+    var sFb2 = useState("idle"); var syncStatus=sFb2[0], setSyncStatus=sFb2[1];
+    var sFb3 = useState(false); var fbReady=sFb3[0], setFbReady=sFb3[1];
+    var fbInitialized = useRef(false);
+    var isLoadingFromCloud = useRef(false);
+
+    useEffect(function(){
+      if (fbInitialized.current) return;
+      function tryInit() {
+        if (!window.firebase || !window.firebase.initializeApp) {
+          setTimeout(tryInit, 200); return;
+        }
+        if (!window.FIREBASE_CONFIG || window.FIREBASE_CONFIG.apiKey === "PLACEHOLDER" || !window.FIREBASE_CONFIG.apiKey) {
+          return;
+        }
+        try {
+          window.firebase.initializeApp(window.FIREBASE_CONFIG);
+          fbInitialized.current = true;
+          setFbReady(true);
+          window.firebase.auth().onAuthStateChanged(function(u){
+            setFbUser(u);
+            if (u) {
+              setTimeout(function(){ loadFromCloud(u); }, 100);
+            }
+          });
+        } catch(e) {
+          console.error("Firebase init error:", e);
+        }
+      }
+      tryInit();
+    }, []);
+
+    function loadFromCloud(u) {
+      if (!window.firebase || !u) return;
+      isLoadingFromCloud.current = true;
+      setSyncStatus("syncing");
+      window.firebase.firestore().collection("users").doc(u.uid).get().then(function(doc){
+        if (doc.exists) {
+          var data = doc.data();
+          var loadedSomething = false;
+          if (Array.isArray(data.transacoes)) { setTransacoes(data.transacoes); loadedSomething = true; }
+          if (Array.isArray(data.categorias) && data.categorias.length>0) setCategorias(data.categorias);
+          if (Array.isArray(data.carteiras) && data.carteiras.length>0) setCarteiras(data.carteiras);
+          if (data.meta && typeof data.meta === "object") setMeta(data.meta);
+          if (loadedSomething) toastMgr.push("Dados sincronizados da nuvem ☁","success");
+          else toastMgr.push("Conectado à nuvem","success");
+        } else {
+          saveToCloud(u, transacoes, categorias, carteiras, meta);
+          toastMgr.push("Conta criada na nuvem. Backup ativo!","success");
+        }
+        setSyncStatus("synced");
+        setTimeout(function(){ isLoadingFromCloud.current = false; }, 800);
+      }).catch(function(e){
+        console.error("Load error:", e);
+        setSyncStatus("error");
+        toastMgr.push("Erro ao sincronizar: "+e.message,"error");
+        isLoadingFromCloud.current = false;
+      });
+    }
+
+    function saveToCloud(u, ts, cats, ws, mt) {
+      if (!u || !window.firebase) return Promise.resolve();
+      setSyncStatus("syncing");
+      var transToSave = (ts||[]).map(function(t){
+        var c = Object.assign({}, t);
+        if (c.comprovante && typeof c.comprovante === "string" && c.comprovante.length > 80000) c.comprovante = null;
+        return c;
+      });
+      return window.firebase.firestore().collection("users").doc(u.uid).set({
+        transacoes: transToSave,
+        categorias: cats||[],
+        carteiras: ws||[],
+        meta: mt||{},
+        updatedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+        version: 1
+      }).then(function(){
+        setSyncStatus("synced");
+      }).catch(function(e){
+        console.error("Save error:", e);
+        setSyncStatus("error");
+        toastMgr.push("Erro ao salvar na nuvem","error");
+      });
+    }
+
+    useEffect(function(){
+      if (!fbUser || !fbReady || isLoadingFromCloud.current) return;
+      var t = setTimeout(function(){ saveToCloud(fbUser, transacoes, categorias, carteiras, meta); }, 1500);
+      return function(){ clearTimeout(t); };
+    }, [transacoes, categorias, carteiras, meta, fbUser, fbReady]);
+
+    function loginGoogle() {
+      if (!fbReady) {
+        toastMgr.push("Firebase não configurado. Veja FIREBASE_SETUP.md","error");
+        return;
+      }
+      var provider = new window.firebase.auth.GoogleAuthProvider();
+      window.firebase.auth().signInWithPopup(provider).then(function(){
+        toastMgr.push("Login realizado! 🎉","success");
+      }).catch(function(e){
+        if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
+          toastMgr.push("Erro: "+(e.message||e.code),"error");
+        }
+      });
+    }
+
+    function logout() {
+      if (!confirm("Sair da conta? Seus dados locais permanecerão neste dispositivo, mas não serão mais sincronizados.")) return;
+      window.firebase.auth().signOut().then(function(){
+        setFbUser(null);
+        setSyncStatus("idle");
+        toastMgr.push("Você saiu da conta","info");
+      });
+    }
+
+    function manualSync() {
+      if (!fbUser) return;
+      saveToCloud(fbUser, transacoes, categorias, carteiras, meta).then(function(){
+        toastMgr.push("Sincronização manual concluída ✓","success");
+      });
+    }
 
     var toastMgr = useToasts();
     useEffect(function(){
@@ -1380,6 +1520,22 @@ window.addEventListener("error", function (ev) {
                 style:{letterSpacing:"-0.02em"}}, "FinanceiroPro Elite"),
               h("p",{className:"text-[10px] text-zinc-500 uppercase tracking-widest"}, "Gestão profissional"))),
           h("div",{className:"flex items-center gap-1.5"},
+            fbReady && fbUser ? h("div",{className:"flex items-center gap-1.5"},
+              h("button",{onClick:manualSync, title:"Sincronizar agora",
+                className:"card p-2 rounded-lg "+(syncStatus==="syncing"?"text-orange-400 animate-spin":syncStatus==="synced"?"text-green-400":syncStatus==="error"?"text-red-400":"text-zinc-400")},
+                h(Icon,{name:syncStatus==="error"?"cloudOff":"cloud",size:16})),
+              h("button",{onClick:logout, title:fbUser.displayName||fbUser.email,
+                className:"card flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-zinc-300 hover:text-white"},
+                fbUser.photoURL
+                  ? h("img",{src:fbUser.photoURL,alt:"",className:"w-5 h-5 rounded-full"})
+                  : h(Icon,{name:"user",size:14}),
+                h("span",{className:"text-xs font-semibold hidden md:inline"}, (fbUser.displayName||fbUser.email||"").split(" ")[0]),
+                h(Icon,{name:"logOut",size:12,className:"text-zinc-500"}))
+            ) : fbReady ? h("button",{onClick:loginGoogle, title:"Entrar com Google — sincronize na nuvem",
+              className:"card flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-zinc-300 hover:text-orange-400 border border-orange-500/30"},
+              h(Icon,{name:"cloud",size:14}),
+              h("span",{className:"text-xs font-semibold hidden sm:inline"},"Entrar"))
+            : null,
             h("button",{onClick:function(){setTheme(theme==="dark"?"light":"dark");},
               className:"card p-2 rounded-lg text-zinc-400 hover:text-orange-400",title:"Tema"},
               h(Icon,{name:theme==="dark"?"sun":"moon",size:16})),
@@ -1389,8 +1545,8 @@ window.addEventListener("error", function (ev) {
             h("a",{href:"https://mpago.la/2z5Uj6E",target:"_blank",rel:"noopener noreferrer",
               title:"Apoie este projeto via Pix no Mercado Pago — sua contribuição mantém o app gratuito e em evolução! 🧡",
               onClick:function(){ toastMgr.push("Obrigado pelo apoio! 🧡","success"); },
-              className:"hidden sm:flex items-center gap-2 gradient-bg text-black hover:opacity-90 px-3 py-2 rounded-lg text-xs font-extrabold transition"},
-              h(Icon,{name:"heart",size:14})," Apoiar via Pix"))),
+              className:"hidden lg:flex items-center gap-2 gradient-bg text-black hover:opacity-90 px-3 py-2 rounded-lg text-xs font-extrabold transition"},
+              h(Icon,{name:"heart",size:14})," Apoiar"))),
         h("nav",{className:"max-w-6xl mx-auto px-2 flex gap-1 overflow-x-auto"},
           [
             { id:"dashboard", label:"Dashboard", icon:"chart" },
