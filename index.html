@@ -759,7 +759,18 @@ window.addEventListener("error", function (ev) {
       reader.readAsText(file);
     }
     function clearAll() {
-      if (!confirm("APAGAR todas as transações? Isso não pode ser desfeito.")) return;
+      var temBackup = confirm(
+        "ATENÇÃO: você vai apagar TODAS as transações — esta ação é definitiva.\n\n"+
+        "Você já fez o backup dos seus dados?\n\n"+
+        "OK = sim, o backup já foi feito\n"+
+        "Cancelar = ainda não fiz o backup"
+      );
+      if (!temBackup) {
+        if (confirm("Deseja exportar o backup (JSON) agora?")) exportJSON();
+        props.toast("Apague somente depois de salvar o backup.","info");
+        return;
+      }
+      if (!confirm("Confirmar exclusão de TODAS as transações? Não há como desfazer.")) return;
       props.setTransacoes([]);
       props.toast("Transações apagadas","info");
     }
