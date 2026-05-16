@@ -35,7 +35,7 @@
   .gradient-bg { background: linear-gradient(135deg, #FFB800 0%, #FF6B00 100%); }
   .card { background: var(--bg-elevated); border: 1px solid var(--border); }
   .card-h:hover { border-color: var(--border-strong); }
-  .input { background: #2a2a2a; border: 1px solid var(--border); color: #fff; }
+  .input { background: #2a2a2a; border: 1px solid var(--border); color: var(--text); }
   .input:focus { border-color: var(--primary-2); outline: none; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -62,7 +62,10 @@
     --border: #e5e5e7; --border-strong: #d1d1d6;
     --text: #1c1c1e; --text-muted: #48484a; --text-dim: #8e8e93;
   }
-  body.light .input { background: #fafafa; }
+  body.light .input { background: #fafafa; color: var(--text); }
+  body.light .input::placeholder { color: var(--text-dim); }
+  body.light input, body.light select, body.light textarea { color-scheme: light; }
+  body.light .hover\:text-white:hover { color: var(--text); }
   body.light .modal-overlay { background: rgba(255,255,255,0.6); }
   /* Safe areas iOS */
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
@@ -505,10 +508,10 @@ window.addEventListener("error", function (ev) {
                 return h("div",{className:"grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 bg-black/30 rounded-lg border border-yellow-500/30"},
                   h("div",null,
                     h("p",{className:"text-[9px] uppercase text-zinc-500"},"Total KM"),
-                    h("p",{className:"text-sm font-bold text-white"}, k!=null ? k.toFixed(1)+" km" : "—")),
+                    h("p",{className:"text-sm font-bold",style:{color:"var(--text)"}}, k!=null ? k.toFixed(1)+" km" : "—")),
                   h("div",null,
                     h("p",{className:"text-[9px] uppercase text-zinc-500"},"Total Horas"),
-                    h("p",{className:"text-sm font-bold text-white"}, hT!=null ? hT.toFixed(2)+" h" : "—")),
+                    h("p",{className:"text-sm font-bold",style:{color:"var(--text)"}}, hT!=null ? hT.toFixed(2)+" h" : "—")),
                   h("div",null,
                     h("p",{className:"text-[9px] uppercase text-zinc-500"},"R$/km"),
                     h("p",{className:"text-sm font-bold gradient-text"}, k && v ? formatMoney(v/k) : "—")),
@@ -618,13 +621,13 @@ window.addEventListener("error", function (ev) {
             h(Icon,{name:slide.icon,size:42})),
           h("p",{className:"text-[10px] uppercase tracking-widest text-orange-400 font-bold mb-1"}, slide.subtitle),
           h("h2",{className:"text-2xl sm:text-3xl font-extrabold gradient-text mb-3"}, slide.title),
-          h("p",{className:"text-sm sm:text-base text-zinc-300 mb-5 leading-relaxed"}, slide.text),
+          h("p",{className:"text-sm sm:text-base mb-5 leading-relaxed",style:{color:"var(--text-muted)"}}, slide.text),
           h("ul",{className:"text-left space-y-2 mb-5 bg-black/20 rounded-xl p-4 border border-[var(--border)]"},
             slide.highlights.map(function(hl,i){
               return h("li",{key:i,className:"flex items-start gap-2.5 text-sm"},
                 h("span",{className:"w-6 h-6 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400 shrink-0 mt-0.5"},
                   h(Icon,{name:hl.icon,size:13})),
-                h("span",{className:"text-zinc-300"},hl.text));
+                h("span",{style:{color:"var(--text-muted)"}},hl.text));
             })),
           slide.cta && h("a",{href:slide.cta.url,target:"_blank",rel:"noopener noreferrer",
             className:"pulse-orange w-full block gradient-bg text-black px-5 py-3 rounded-xl font-extrabold flex items-center justify-center gap-2 mb-4 hover:scale-[1.02] transition"},
@@ -633,7 +636,7 @@ window.addEventListener("error", function (ev) {
             slides.map(function(_,i){ return h("div",{key:i,
               className:"h-1.5 rounded-full transition-all",
               style:{ width: i===step?28:8, background: i===step?"#FF6B00":"#3a3a3a" }}); })),
-          isLast && h("label",{className:"flex items-center justify-center gap-2 text-xs text-zinc-400 cursor-pointer mb-4"},
+          isLast && h("label",{className:"flex items-center justify-center gap-2 text-xs cursor-pointer mb-4",style:{color:"var(--text-muted)"}},
             h("input",{type:"checkbox",checked:dontShow,
               onChange:function(e){setDontShow(e.target.checked);},
               className:"w-4 h-4 accent-orange-500"}),
@@ -1124,9 +1127,9 @@ window.addEventListener("error", function (ev) {
         h("div",{className:"w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center text-black shrink-0"},
           h(Icon,{name:"heart",size:26})),
         h("div",{className:"flex-1 min-w-0"},
-          h("h3",{className:"text-base sm:text-lg font-extrabold text-white mb-1"},
+          h("h3",{className:"text-base sm:text-lg font-extrabold mb-1",style:{color:"var(--text)"}},
             "Gostou do FinanceiroPro Elite? 🧡"),
-          h("p",{className:"text-xs sm:text-sm text-zinc-300 leading-relaxed"},
+          h("p",{className:"text-xs sm:text-sm leading-relaxed",style:{color:"var(--text-muted)"}},
             "Este app é ",h("b",{className:"text-yellow-400"},"100% gratuito"),", sem anúncios e sem coleta de dados. ",
             "Se ele está te ajudando a organizar suas finanças, considere apoiar com qualquer valor via ",
             h("b",{className:"gradient-text"},"Pix no Mercado Pago"),". Cada contribuição mantém o projeto vivo e em constante evolução. ",
@@ -1638,15 +1641,15 @@ window.addEventListener("error", function (ev) {
                   h("div",{className:"w-9 h-9 rounded-lg flex items-center justify-center",
                     style:{background:w.color+"22",color:w.color}}, h(Icon,{name:w.icon,size:16})),
                   h("div",{className:"flex-1 min-w-0"},
-                    h("p",{className:"text-xs text-zinc-400"},w.label),
-                    h("p",{className:"font-bold "+(v>=0?"text-white":"text-red-400")}, formatMoney(v))));
+                    h("p",{className:"text-xs",style:{color:"var(--text-muted)"}},w.label),
+                    h("p",{className:"font-bold"+(v>=0?"":" text-red-400"),style:v>=0?{color:"var(--text)"}:null}, formatMoney(v))));
               })))
         ),
         tab==="motorista" && h(Fragment, null,
           h("section",{className:"grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3"},
             [
-              { l:"Total KM", v: motorista.km.toFixed(1)+" km", c:"text-white" },
-              { l:"Total Horas", v: motorista.h.toFixed(1)+" h", c:"text-white" },
+              { l:"Total KM", v: motorista.km.toFixed(1)+" km", c:"" },
+              { l:"Total Horas", v: motorista.h.toFixed(1)+" h", c:"" },
               { l:"R$ por KM (bruto)", v: formatMoney(motorista.porKm), c:"gradient-text" },
               { l:"R$ por Hora", v: formatMoney(motorista.porHora), c:"gradient-text" }
             ].map(function(it,i){
@@ -1770,7 +1773,7 @@ window.addEventListener("error", function (ev) {
               h(Icon,{name:"search",size:18,className:"text-zinc-500 shrink-0 ml-1"}),
               h("input",{id:"search-input",type:"text",placeholder:"Buscar por descrição… (atalho: /)",
                 value:busca,onChange:function(e){setBusca(e.target.value);},
-                className:"flex-1 bg-transparent text-sm focus:outline-none text-white placeholder:text-zinc-500"}),
+                className:"flex-1 bg-transparent text-sm focus:outline-none placeholder:text-zinc-500",style:{color:"var(--text)"}}),
               busca && h("button",{onClick:function(){setBusca("");},className:"text-zinc-500 hover:text-white"},
                 h(Icon,{name:"x",size:14})))),
           h("section",{className:"card rounded-2xl p-3 sm:p-4"},
